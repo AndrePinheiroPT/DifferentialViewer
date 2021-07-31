@@ -1,5 +1,6 @@
 import pygame
 from pygame.locals import *
+from math import *
 
 # Screen configuration
 SCREEN_WIDTH = 600
@@ -9,8 +10,9 @@ CYAN = (50, 50, 50)
 # Differential Equation state
 state = [0, 0, 0]
 points = []
-x_max = 1
-y_max = 1
+function_points = []
+x_max = 6
+y_max = 6
 coords = ('X', 'Y')
 
 pygame.init()
@@ -75,25 +77,35 @@ def differential(x, y, z):
     state[2] += dz
     update_standard_values()
     points.append((standard_values[0], standard_values[1])) 
-    pygame.draw.lines(screen, (0, 255, 0), False, points, 3)
 
 
-def infinite_sum(a, b):
+def series_sums(a, b, sums, length):
     global points
-    for n in range(0, 10):
-        if -10 < state[0] < 10 or -10 < state[1] < 10:
-            prev_z0 = state[0]**2 - state[1]**2 + a
-            prev_z1 = 2 * state[0] * state[1] + b 
-            state[0] = prev_z0
-            state[1] = prev_z1
+    for n in range(1, length):
+        if -x_max < state[0] < x_max and -y_max < state[1] < y_max:
+            #prev_z0 = state[0]**2 - state[1]**2 + a
+            #prev_z1 = 2 * state[0] * state[1] + b 
+            r_f = (-2**(1-a) * cos(b*log(2)) + 1) / ((-2**(1-a) * cos(b*log(2)) + 1)**2 + (2**(1-a) * sin(b*log(2)))**2) 
+            i_f = (-2**(1-a) * sin(b*log(2))) / ((-2**(1-a) * cos(b*log(2)) + 1)**2 + (2**(1-a) * sin(b*log(2)))**2)
+
+            r_g = (-1)**(n-1) * (cos(b*log(n)) / (n**a))
+            i_g = (-1)**(n-1) * (-sin(b * log(n)) / (n**a))
+
+            prev_z0 = r_f * r_g - i_f * i_g
+            prev_z1 = r_f * i_g + i_f * r_g
+
+            if sums:
+                state[0] += prev_z0
+                state[1] += prev_z1
+            else:
+                state[0] = prev_z0
+                state[1] = prev_z1
             update_standard_values()
             points.append((standard_values[0], standard_values[1])) 
 
-    if len(points) >= 2:
-        pygame.draw.lines(screen, (0, 255, 0), False, points, 2)
-    
 
 clock = pygame.time.Clock()
+k = 0
 while True:
     clock.tick(100)
     screen.fill((0, 0, 0))
@@ -104,18 +116,27 @@ while True:
     cartesian_plane()
 
     #differential(state[0], state[1], state[2])
-    infinite_sum(mouse_state[0], mouse_state[1])
-    
+    series_sums(0.5, k, True, 1000)
+    print(state)
+    print(k)
+
+    if len(points) >= 2:
+        pygame.draw.lines(screen, (0, 255, 0), False, points, 1)
+    if len(function_points) >= 2:
+        pygame.draw.lines(screen, (255, 255, 0), False, function_points, 2)
+
     pygame.draw.circle(screen, (255, 255, 255), (standard_values[0], standard_values[1]), 3)
 
     for event in pygame.event.get():
         if event.type == QUIT:
             pygame.quit()
 
-        if event.type == pygame.MOUSEMOTION:
-            state = [0, 0, 0]
-            update_standard_values()
-            points = [(standard_values[0], standard_values[1])]
+    function_points.append((standard_values[0], standard_values[1]))
+    state = [0, 0, 0]
+    update_standard_values()
+    points = [(standard_values[0], standard_values[1])]
     
+
+    k += 0.05
     pygame.display.update()
 
