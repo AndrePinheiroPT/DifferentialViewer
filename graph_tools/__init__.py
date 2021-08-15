@@ -11,6 +11,19 @@ def update_standard_values():
     ]
     
 
+def convert_coords(coords, standard):
+    if standard:
+        return (
+            (settings.CONFIG['screen_width']/2) * (coords[0]/settings.CONFIG['x_max'] + 1),
+            (settings.CONFIG['screen_height']/2) * (1 - coords[1]/settings.CONFIG['y_max'])
+        )
+    else:
+        return (
+            (coords[0] / (settings.CONFIG['screen_width']/2) - 1) * settings.CONFIG['x_max'],
+            (1 - coords[1] / (settings.CONFIG['screen_height']/2)) * settings.CONFIG['y_max']
+        )
+
+
 def cartesian_plane():
     x_value = -settings.CONFIG['x_max']
     y_value = -settings.CONFIG['y_max']
@@ -67,3 +80,15 @@ def complex_functions(func, domain_func, t_min, t_max, dt=0.01):
 
     if len(complex_function_points) >= 2:
         pygame.draw.lines(settings.screen, (255, 255, 0), False, complex_function_points, 2)
+
+
+
+def vector_field(func, space, color=(0, 255, 0), rate=1):
+
+    for x in range(space - settings.CONFIG['x_max'], settings.CONFIG['x_max'] - space, space):
+        for y in range(space - settings.CONFIG['y_max'], settings.CONFIG['y_max'] - space, space):
+
+            output_fx = (x + func(x, y)[0]) * rate
+            output_fy = (y + func(x, y)[1]) * rate
+
+            pygame.draw.line(settings.screen, color, convert_coords((x, y), 1), convert_coords((output_fx, output_fy), 1))

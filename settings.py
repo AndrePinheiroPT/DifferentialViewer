@@ -2,10 +2,10 @@ import pygame
 import graph_tools
 
 CONFIG = {
-    'screen_width': 900,
+    'screen_width': 600,
     'screen_height': 600,
-    'x_max': 6,
-    'y_max': 2,
+    'x_max': 8,
+    'y_max': 8,
     'x_label': 'Re',
     'y_label': 'Im'
 }

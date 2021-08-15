@@ -59,6 +59,12 @@ def zeta_domain(t):
     return [0.5, t]
 
 
+def vector_f(x, y):
+    f_x = y**3 - 9*y
+    f_y = x**3 - 9*x
+    return [f_x, f_y]
+
+
 clock = pygame.time.Clock()
 while True:
     clock.tick(100)
@@ -70,8 +76,7 @@ while True:
 
     cartesian_plane()
     #real_functions(lambda x: sin(x), -6, 6)
-    complex_functions(zeta_function, zeta_domain, 0, 15, 0.01)
-
+    vector_field(vector_f, 1)
     #if len(points) >= 2:
         #pygame.draw.lines(screen, (0, 255, 0), False, points, 1)
 
