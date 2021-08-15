@@ -83,12 +83,13 @@ def complex_functions(func, domain_func, t_min, t_max, dt=0.01):
 
 
 
-def vector_field(func, space, color=(0, 255, 0), rate=1):
+def vector_field(func, space, color=(0, 255, 0)):
 
-    for x in range(space - settings.CONFIG['x_max'], settings.CONFIG['x_max'] - space, space):
-        for y in range(space - settings.CONFIG['y_max'], settings.CONFIG['y_max'] - space, space):
+    for x in range(space - settings.CONFIG['x_max'], settings.CONFIG['x_max'] - space + 1, space):
+        for y in range(space - settings.CONFIG['y_max'], settings.CONFIG['y_max'] - space + 1, space):
+            vector_length = 0.00001 if sqrt(func(x, y)[0]**2 + func(x, y)[1]**2) == 0 else sqrt(func(x, y)[0]**2 + func(x, y)[1]**2)
 
-            output_fx = (x + func(x, y)[0]) * rate
-            output_fy = (y + func(x, y)[1]) * rate
+            output_fx = x + func(x, y)[0]/vector_length * 0.8
+            output_fy = y + func(x, y)[1]/vector_length * 0.8
 
             pygame.draw.line(settings.screen, color, convert_coords((x, y), 1), convert_coords((output_fx, output_fy), 1))
