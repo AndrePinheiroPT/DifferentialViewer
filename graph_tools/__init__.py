@@ -11,6 +11,19 @@ def update_standard_values():
     ]
     
 
+def convert_coords(coords, standard):
+    if standard:
+        return (
+            (settings.CONFIG['screen_width']/2) * (coords[0]/settings.CONFIG['x_max'] + 1),
+            (settings.CONFIG['screen_height']/2) * (1 - coords[1]/settings.CONFIG['y_max'])
+        )
+    else:
+        return (
+            (coords[0] / (settings.CONFIG['screen_width']/2) - 1) * settings.CONFIG['x_max'],
+            (1 - coords[1] / (settings.CONFIG['screen_height']/2)) * settings.CONFIG['y_max']
+        )
+
+
 def cartesian_plane():
     x_value = -settings.CONFIG['x_max']
     y_value = -settings.CONFIG['y_max']
@@ -67,3 +80,27 @@ def complex_functions(func, domain_func, t_min, t_max, dt=0.01):
 
     if len(complex_function_points) >= 2:
         pygame.draw.lines(settings.screen, (255, 255, 0), False, complex_function_points, 2)
+
+
+def vector_field(func, space, scalar, color=(0, 255, 0)):
+
+    for x in range(-settings.CONFIG['x_max'], settings.CONFIG['x_max']+ 1, space):
+        for y in range(-settings.CONFIG['y_max'], settings.CONFIG['y_max']+ 1, space):
+            vector_length = 0.001 if sqrt(func(x, y)[0]**2 + func(x, y)[1]**2) == 0 else sqrt(func(x, y)[0]**2 + func(x, y)[1]**2)
+
+            v_stick1 = (
+                0.15*(func(x, y)[1]/vector_length - func(x, y)[0]/vector_length),
+                -0.15*(func(x, y)[0]/vector_length + func(x, y)[1]/vector_length)
+            ) 
+
+            v_stick2 = (
+                -0.15*(func(x, y)[1]/vector_length + func(x, y)[0]/vector_length),
+                0.15*(func(x, y)[0]/vector_length - func(x, y)[1]/vector_length)
+            )
+
+            output_fx = x + func(x, y)[0] * scalar
+            output_fy = y + func(x, y)[1] * scalar
+
+            pygame.draw.line(settings.screen, color, convert_coords((x, y), 1), convert_coords((output_fx, output_fy), 1), 2)
+            pygame.draw.line(settings.screen, color, convert_coords((output_fx, output_fy), 1), convert_coords((output_fx + v_stick1[0], output_fy + v_stick1[1]), 1), 2)
+            pygame.draw.line(settings.screen, color, convert_coords((output_fx, output_fy), 1), convert_coords((output_fx + v_stick2[0], output_fy + v_stick2[1]), 1), 2)
