@@ -1,5 +1,6 @@
 import pygame
 from pygame.locals import *
+import pygame.gfxdraw
 from math import *
 import settings
 
@@ -49,7 +50,7 @@ def cartesian_plane():
     pygame.draw.line(settings.screen, settings.WHITE, (0, settings.CONFIG['screen_height']/2), (settings.CONFIG['screen_width'], settings.CONFIG['screen_height']/2), 1)
 
 
-def real_functions(function, xd_min, xd_max, dx=0.01):
+def real_functions(function, xd_min, xd_max, dx=0.01, color=(255, 255, 0)):
     
     settings.state[0] = xd_min
     function_points = []
@@ -62,10 +63,10 @@ def real_functions(function, xd_min, xd_max, dx=0.01):
         function_points.append((settings.standard_values[0], settings.standard_values[1]))
 
     if len(function_points) >= 2:
-        pygame.draw.lines(settings.screen, (255, 255, 0), False, function_points, 2)
+        pygame.draw.lines(settings.screen, color, False, function_points, 3)
 
 
-def complex_functions(func, domain_func, t_min, t_max, dt=0.01):
+def complex_functions(func, domain_func, t_min, t_max, dt=0.01, color=(255, 255, 0)):
 
     complex_function_points = []
     t = t_min 
@@ -79,7 +80,7 @@ def complex_functions(func, domain_func, t_min, t_max, dt=0.01):
         complex_function_points.append((settings.standard_values[0], settings.standard_values[1])) 
 
     if len(complex_function_points) >= 2:
-        pygame.draw.lines(settings.screen, (255, 255, 0), False, complex_function_points, 2)
+        pygame.draw.lines(settings.screen, color, False, complex_function_points, 2)
 
 
 def vector_field(func, space, scalar, color=(0, 255, 0)):
@@ -104,3 +105,59 @@ def vector_field(func, space, scalar, color=(0, 255, 0)):
             pygame.draw.line(settings.screen, color, convert_coords((x, y), 1), convert_coords((output_fx, output_fy), 1), 2)
             pygame.draw.line(settings.screen, color, convert_coords((output_fx, output_fy), 1), convert_coords((output_fx + v_stick1[0], output_fy + v_stick1[1]), 1), 2)
             pygame.draw.line(settings.screen, color, convert_coords((output_fx, output_fy), 1), convert_coords((output_fx + v_stick2[0], output_fy + v_stick2[1]), 1), 2)
+
+
+def derivative_line(func, x, x_min, x_max, h=0.0001, color=(230, 0, 85)):
+    
+    deriv = 0
+    if x_min <= x <= x_max:
+        settings.state[0] = x 
+        settings.state[1] = func(x)
+
+        deriv = (func(x+h) - func(x)) / h  # slope
+        b = func(x) - deriv*x
+
+        pygame.draw.line(settings.screen, color, 
+        convert_coords((-settings.CONFIG['x_max'], -settings.CONFIG['x_max']*deriv + b), 1), 
+        convert_coords((settings.CONFIG['x_max'], settings.CONFIG['x_max']*deriv + b), 1), 3)
+
+        update_standard_values()
+        pygame.draw.circle(settings.screen, (255, 255, 255), (round(settings.standard_values[0]), round(settings.standard_values[1])), 4)
+
+    return deriv
+
+
+def riemann_rectangles(func, x_min, x_max, n, color_init=[131, 47, 0, 150], color_end=[231, 242, 0, 150]):
+    reason_x = (convert_coords((settings.CONFIG['x_max'], settings.CONFIG['y_max']), 1)[0] - convert_coords((0, 0), 1)[0]) / settings.CONFIG['x_max']
+    reason_y = (convert_coords((settings.CONFIG['x_max'], settings.CONFIG['y_max']), 1)[1] - convert_coords((0, 0), 1)[1]) / settings.CONFIG['y_max']
+
+    color = [0, 0, 0, 0]
+    d_color = [0, 0, 0, 0]
+    for k in range(0, 4):
+        d_color[k] = (color_end[k] - color_init[k]) / n
+
+    dx = (x_max - x_min) / n
+    total_sum = 0
+    for i in range(0, n):
+        for k in range(0, 4):
+            color[k] = color_init[k] + d_color[k]*i
+
+        x = x_min + i*dx
+        dy = func(x)
+
+        total_sum += dy*dx
+
+        pygame.gfxdraw.box(settings.screen, pygame.Rect(convert_coords((x, func(x)), 1), (dx * reason_x, -dy * reason_y + 2)), color)
+
+    return total_sum
+
+
+def limit_aproximation(func, n):
+    settings.state[0] = n 
+    settings.state[1] = func(n)
+
+    update_standard_values()
+    pygame.draw.circle(settings.screen, (255, 255, 255), (round(settings.standard_values[0]), round(settings.standard_values[1])), 4)
+
+    return func(n)
+
