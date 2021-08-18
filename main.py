@@ -75,8 +75,12 @@ while True:
     ]
 
     cartesian_plane()
-    real_functions(lambda x: sin(x), -6, 6)
-    vector_field(vector_f, 2, 0.004)
+    real_functions(lambda x: 1/x**2, 0.01, 6, color=(87, 0, 240))
+    riemann_rectangles(lambda x: 1/x**2, 1, 6, 1050)
+    limit_aproximation(lambda x: 1/x**2, 3, 0.5)
+    derivative_line(lambda x: 1/x**2, mouse_state[0], 0.01, 6)
+
+    #vector_field(vector_f, 1, 0.004)
     
     #if len(points) >= 2:
         #pygame.draw.lines(screen, (0, 255, 0), False, points, 1)
