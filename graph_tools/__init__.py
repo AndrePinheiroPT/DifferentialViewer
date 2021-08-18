@@ -14,15 +14,15 @@ def update_standard_values():
 
 def convert_coords(coords, standard):
     if standard:
-        return (
+        return [
             (settings.CONFIG['screen_width']/2) * (coords[0]/settings.CONFIG['x_max'] + 1),
             (settings.CONFIG['screen_height']/2) * (1 - coords[1]/settings.CONFIG['y_max'])
-        )
+        ]
     else:
-        return (
+        return [
             (coords[0] / (settings.CONFIG['screen_width']/2) - 1) * settings.CONFIG['x_max'],
             (1 - coords[1] / (settings.CONFIG['screen_height']/2)) * settings.CONFIG['y_max']
-        )
+        ]
 
 
 def cartesian_plane():
@@ -109,22 +109,22 @@ def vector_field(func, space, scalar, color=(0, 255, 0)):
 
 def derivative_line(func, x, x_min, x_max, h=0.0001, color=(230, 0, 85)):
     
-    deriv = 0
+    derivative = 0
     if x_min <= x <= x_max:
-        settings.state[0] = x 
-        settings.state[1] = func(x)
 
-        deriv = (func(x+h) - func(x)) / h  # slope
-        b = func(x) - deriv*x
+        derivative = (func(x+h) - func(x)) / h  # slope
+        b = func(x) - derivative*x
 
         pygame.draw.line(settings.screen, color, 
-        convert_coords((-settings.CONFIG['x_max'], -settings.CONFIG['x_max']*deriv + b), 1), 
-        convert_coords((settings.CONFIG['x_max'], settings.CONFIG['x_max']*deriv + b), 1), 3)
+        convert_coords((-settings.CONFIG['x_max'], -settings.CONFIG['x_max']*derivative + b), 1), 
+        convert_coords((settings.CONFIG['x_max'], settings.CONFIG['x_max']*derivative + b), 1), 3)
 
-        update_standard_values()
-        pygame.draw.circle(settings.screen, (255, 255, 255), (round(settings.standard_values[0]), round(settings.standard_values[1])), 4)
+        derivative_standards = convert_coords((x, func(x)), 1)
+        for i in range(0, 2):
+            derivative_standards[i] = round(derivative_standards[i])
+        pygame.draw.circle(settings.screen, (255, 255, 255), derivative_standards, 4)
 
-    return deriv
+    return derivative
 
 
 def riemann_rectangles(func, x_min, x_max, n, color_init=[131, 47, 0, 150], color_end=[231, 242, 0, 150]):
@@ -147,17 +147,17 @@ def riemann_rectangles(func, x_min, x_max, n, color_init=[131, 47, 0, 150], colo
 
         total_sum += dy*dx
 
-        pygame.gfxdraw.box(settings.screen, pygame.Rect(convert_coords((x, func(x)), 1), (dx * reason_x, -dy * reason_y + 2)), color)
+        pygame.gfxdraw.box(settings.screen, pygame.Rect(convert_coords((x, func(x)), 1), (dx * reason_x, -dy * reason_y + 1)), color)
 
     return total_sum
 
 
-def limit_aproximation(func, n):
-    settings.state[0] = n 
-    settings.state[1] = func(n)
+def limit_aproximation(func, h, delta, color=(255, 255, 0)):
+    real_functions(func, h - delta, h + delta)
+    standard_limit = convert_coords((h, func(h)), 1)
+    for i in range(0, 2):
+        standard_limit[i] = round(standard_limit[i])
+    pygame.draw.circle(settings.screen, color, standard_limit, 4)
 
-    update_standard_values()
-    pygame.draw.circle(settings.screen, (255, 255, 255), (round(settings.standard_values[0]), round(settings.standard_values[1])), 4)
-
-    return func(n)
+    return func(h)
 
