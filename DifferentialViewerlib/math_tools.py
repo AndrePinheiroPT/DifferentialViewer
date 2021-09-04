@@ -21,13 +21,14 @@ font = None
 
 class Viewer():
     def __init__(self, config):
-        self.user_code = None
-        self.config = config
+        self.slide_index = 0
+        self.slides = []
         self.mouse_state = []
+        self.config = config
         self.time = 0
     
-    def set_code(self, user_code):
-        self.user_code = user_code
+    def set_slides(self, slides):
+        self.slides = slides
 
     def init(self):
         global screen, font, CONFIG
@@ -51,19 +52,18 @@ class Viewer():
                 (1 - pygame.mouse.get_pos()[1] / (CONFIG['screen_height']/2)) * CONFIG['y_max']
             ]
 
-            self.user_code()
+            self.slides[self.slide_index]()
 
             for event in pygame.event.get():
                 if event.type == QUIT:
                     pygame.quit()
-                #if event.type == pygame.KEYDOWN:
-                #    if event.key == pygame.K_LEFT:
-                #        if slide_index > 1:
-                #            slide_index -= 1
-                #    if event.key == pygame.K_RIGHT:
-                #        if slide_index < len(slides) - 1:
-                #            slide_index += 1
-                #
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        if self.slide_index > 1:
+                            self.slide_index -= 1
+                    if event.key == pygame.K_RIGHT:
+                        if self.slide_index < len(self.slides) - 1:
+                            self.slide_index += 1
 
             self.time += 0.01
             pygame.display.update()
@@ -100,14 +100,14 @@ def cartesian_plane():
 
     for x in range(0, CONFIG['screen_width'], 100):
         pygame.draw.line(screen, CYAN, (x, 0), (x, CONFIG['screen_height']), 1)
-        if x_value != 0:
+        if x != CONFIG['screen_width']/2:
             screen.blit(font.render(f'{x_value:.1f}', False, WHITE), (x+5, CONFIG['screen_height']/2))
         x_value += CONFIG['x_max'] / (ceil(CONFIG['screen_width']/100) / 2)
     
 
     for y in range(CONFIG['screen_height'], 0, -100):
         pygame.draw.line(screen, WHITE if y == CONFIG['screen_width']/2 else CYAN, (0, y), (CONFIG['screen_width'], y), 1)
-        if y_value != 0:
+        if y != CONFIG['screen_height']/2:
             screen.blit(font.render(f'{y_value:.1f}', False, WHITE), (CONFIG['screen_width']/2 + 5, y-22))
         y_value += CONFIG['y_max'] / (ceil(CONFIG['screen_height']/100) / 2)
 
@@ -117,15 +117,13 @@ def cartesian_plane():
 
 def real_functions(function, xd_min, xd_max, dx=0.01, color=(255, 255, 0)):
     
-    state[0] = xd_min
+    x = xd_min
     function_points = []
-    while xd_min <= state[0] <= xd_max:
-        state[0] += dx
+    while xd_min <= x <= xd_max:
+        x += dx
+        y = function(x)
 
-        state[1] = function(state[0])
-
-        update_standard_values()
-        function_points.append((standard_values[0], standard_values[1]))
+        function_points.append(convert_coords((x, y), 1))
 
     if len(function_points) >= 2:
         pygame.draw.lines(screen, color, False, function_points, 3)
@@ -138,11 +136,11 @@ def complex_functions(func, domain_func, t_min, t_max, dt=0.01, color=(255, 255,
     while t_min <= t <= t_max:
         t += dt
 
+        z = []
         for i in range(0, 2):
-            state[i] = func(*domain_func(t))[i]
+            z.append(func(*domain_func(t))[i])
 
-        update_standard_values()
-        complex_function_points.append((standard_values[0], standard_values[1])) 
+        function_points.append(convert_coords((z[0], z[1]), 1))
 
     if len(complex_function_points) >= 2:
         pygame.draw.lines(screen, color, False, complex_function_points, 2)
@@ -172,23 +170,18 @@ def vector_field(func, space, scalar, color=(0, 255, 0)):
             pygame.draw.line(screen, color, convert_coords((output_fx, output_fy), 1), convert_coords((output_fx + v_stick2[0], output_fy + v_stick2[1]), 1), 2)
 
 
-def derivative_line(func, x, x_min, x_max, h=0.0001, color=(230, 0, 85)):
+def derivative_line(func, x, range_line, h=0.0001, color=(230, 0, 85)):
     
     derivative = 0
-    if x_min <= x <= x_max:
 
-        derivative = (func(x+h) - func(x)) / h  # slope
-        b = func(x) - derivative*x
+    derivative = (func(x+h) - func(x)) / h  # slope
+    b = func(x) - derivative*x
 
-        pygame.draw.line(screen, color, 
-        convert_coords((-CONFIG['x_max'], -CONFIG['x_max']*derivative + b), 1), 
-        convert_coords((CONFIG['x_max'], CONFIG['x_max']*derivative + b), 1), 3)
-
-        derivative_standards = convert_coords((x, func(x)), 1)
-        for i in range(0, 2):
-            derivative_standards[i] = round(derivative_standards[i])
-        pygame.draw.circle(screen, (255, 255, 255), derivative_standards, 4)
-
+    x_range = range_line/(1+derivative**2)**0.5
+    pygame.draw.line(screen, color, 
+    convert_coords((x - x_range, (x - x_range)*derivative + b), 1), 
+    convert_coords((x + x_range, (x + x_range)*derivative + b), 1), 3)
+        
     return derivative
 
 
