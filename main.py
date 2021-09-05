@@ -5,10 +5,12 @@ from pygame.locals import *
 CONFIG = {
     'screen_width': 600,
     'screen_height': 600,
-    'x_max': 8,
-    'y_max': 20,
-    'x_label': 'Y',
-    'y_label': 'X'
+    'x_max': 5,
+    'y_max': 10,
+    'x_min': -5,
+    'y_min': -10,
+    'x_label': 'X',
+    'y_label': 'Y'
 }
 
 viewer = Viewer(CONFIG)
