@@ -5,17 +5,25 @@ from pygame.locals import *
 CONFIG = {
     'screen_width': 600,
     'screen_height': 600,
-    'x_max': 8,
-    'y_max': 20,
-    'x_label': 'Y',
-    'y_label': 'X'
+    'x_min': -6,
+    'x_max': 6,
+    'y_min': -6,
+    'y_max': 6,
+    'x_label': 'X',
+    'y_label': 'Y'
 }
 
 viewer = Viewer(CONFIG)
 
 def slide1():
     cartesian_plane()
-    real_functions(lambda x: (x-3)*(x+2)*(x+1)+4, -6, 6, color=(87, 0, 240))
+    linear_transformation([
+        [3,2], 
+        [-2, 1]
+    ])
+    vector(2, 1, (215, 0, 0), [0, 0])
+    vector(3, -2, (0, 225, 0), [0, 0])
+    vector(5, -1, (162, 40, 255), [0, 0])
 
 def slide2():
     cartesian_plane()

@@ -8,12 +8,15 @@ CONFIG = {
     'screen_height': 600,
     'x_max': 8,
     'y_max': 3,
+    'x_min': -1,
+    'y_min': -1,
     'x_label': 'Re',
     'y_label': 'Im'
 }
 
 CYAN = (55, 55, 55)
 WHITE = (255, 255, 255)
+YELLOW = (255, 255, 0)
 state = [0, 0]
 standard_values = []
 screen = None
@@ -41,16 +44,13 @@ class Viewer():
         draw_surface = pygame.Surface((CONFIG['screen_width'], CONFIG['screen_height']))
 
         pygame.font.init()
-        font = pygame.font.SysFont('Arial', 20)
+        font = pygame.font.SysFont('Arial', 12)
 
         clock = pygame.time.Clock()
         while True:
             clock.tick(100)
             screen.fill((0, 0, 0))
-            self.mouse_state = [
-                (pygame.mouse.get_pos()[0] / (CONFIG['screen_width']/2) - 1) * CONFIG['x_max'],
-                (1 - pygame.mouse.get_pos()[1] / (CONFIG['screen_height']/2)) * CONFIG['y_max']
-            ]
+            self.mouse_state = convert_coords(pygame.mouse.get_pos(), 0)
 
             self.slides[self.slide_index]()
 
@@ -80,43 +80,84 @@ def update_standard_values():
 def convert_coords(coords, standard):
     if standard:
         return [
-            (CONFIG['screen_width']/2) * (coords[0]/CONFIG['x_max'] + 1),
-            (CONFIG['screen_height']/2) * (1 - coords[1]/CONFIG['y_max'])
+            CONFIG['screen_width']/(CONFIG['x_max'] - CONFIG['x_min']) * (coords[0] - CONFIG['x_min']),
+            CONFIG['screen_height']/(CONFIG['y_max'] - CONFIG['y_min']) * (CONFIG['y_max'] - coords[1])
         ]
     else:
         return [
-            (coords[0] / (CONFIG['screen_width']/2) - 1) * CONFIG['x_max'],
-            (1 - coords[1] / (CONFIG['screen_height']/2)) * CONFIG['y_max']
+            coords[0] * (CONFIG['x_max'] - CONFIG['x_min']) / CONFIG['screen_width'] + CONFIG['x_min'],
+            -coords[1] * (CONFIG['y_max'] - CONFIG['y_min']) / CONFIG['screen_height'] + CONFIG['x_max']
         ]
 
 
 def cartesian_plane():
-    x_value = -CONFIG['x_max']
-    y_value = -CONFIG['y_max']
+    x_value = round(CONFIG['x_min'])
+    y_value = round(CONFIG['y_min'])
 
-    screen.blit(font.render(f'{CONFIG["x_label"]}', False, WHITE), (CONFIG['screen_width'] - 30, CONFIG['screen_height']/2))
-    screen.blit(font.render(f'{CONFIG["y_label"]}', False, WHITE), (CONFIG['screen_width']/2 + 5 , 0))
-    screen.blit(font.render(f'0', False, WHITE), (CONFIG['screen_width']/2 + 5, CONFIG['screen_height']/2))
+    unit_lenght_x = round(convert_coords((0, 0), 1)[0] - convert_coords((-1, 0), 1)[0])
+    unit_lenght_y = convert_coords((0, 0), 1)[1] - convert_coords((0, 1), 1)[1]
 
-    for x in range(0, CONFIG['screen_width'], 100):
+    for x in range(round(convert_coords((round(CONFIG['x_min']), 0),1)[0]), CONFIG['screen_width'], unit_lenght_x):
         pygame.draw.line(screen, CYAN, (x, 0), (x, CONFIG['screen_height']), 1)
-        if x != CONFIG['screen_width']/2:
-            screen.blit(font.render(f'{x_value:.1f}', False, WHITE), (x+5, CONFIG['screen_height']/2))
-        x_value += CONFIG['x_max'] / (ceil(CONFIG['screen_width']/100) / 2)
+        screen.blit(font.render(f'{x_value:.1f}', False, WHITE), (x+2, convert_coords((0, 0), 1)[1]))
+        x_value += 1
+        
+    y = round(convert_coords((0, round(CONFIG['y_min'])), 1)[1])
+    while y >= 0:
+        pygame.draw.line(screen, CYAN, (0, y), (CONFIG['screen_width'], y), 1)
+        if y_value != 0:
+            screen.blit(font.render(f'{y_value:.1f}', False, WHITE), (convert_coords((0, 0), 1)[0]+3, y-12))
+        y_value += 1
+        y -= unit_lenght_y
+
+    screen.blit(font.render(f'{CONFIG["x_label"]}', False, WHITE), (CONFIG['screen_width'] - 10, convert_coords((0, 0), 1)[1]))
+    screen.blit(font.render(f'{CONFIG["y_label"]}', False, WHITE), (convert_coords((0, 0), 1)[0] + 5 , 0))
+
+    pygame.draw.line(screen, WHITE, (convert_coords((0, 0), 1)[0], 0), (convert_coords((0, 0), 1)[0], CONFIG['screen_height']), 1)
+    pygame.draw.line(screen, WHITE, (0, convert_coords((0, 0), 1)[1]), (CONFIG['screen_width'], convert_coords((0, 0), 1)[1]), 1)
+
+
+def linear_transformation(matrix):
+    alpha = CONFIG['screen_width']/matrix[0][0]
+    beta = CONFIG['screen_height']/matrix[1][1]
+
+    n = round(CONFIG['x_min'])
+    while n <= CONFIG['x_max']:
+        pygame.draw.line(screen, YELLOW, 
+        convert_coords((-beta*matrix[0][1] + n*matrix[0][0], -beta*matrix[1][1] + n*matrix[1][0]), 1), 
+        convert_coords((beta*matrix[0][1] + n*matrix[0][0], beta*matrix[1][1] + n*matrix[1][0]), 1))
+        n += 1
+
+    n = round(CONFIG['y_min']) 
+    while n <= CONFIG['y_max']:
+        pygame.draw.line(screen, YELLOW, 
+        convert_coords((-alpha*matrix[0][0] + n*matrix[0][1], -alpha*matrix[1][0] + n*matrix[1][1]), 1), 
+        convert_coords((alpha*matrix[0][0] + n*matrix[0][1], alpha*matrix[1][0] + n*matrix[1][1]), 1))
+        n += 1
     
 
-    for y in range(CONFIG['screen_height'], 0, -100):
-        pygame.draw.line(screen, WHITE if y == CONFIG['screen_width']/2 else CYAN, (0, y), (CONFIG['screen_width'], y), 1)
-        if y != CONFIG['screen_height']/2:
-            screen.blit(font.render(f'{y_value:.1f}', False, WHITE), (CONFIG['screen_width']/2 + 5, y-22))
-        y_value += CONFIG['y_max'] / (ceil(CONFIG['screen_height']/100) / 2)
+def vector(dx, dy, color, origin_point):
+    vector_length = 0.001 if sqrt(dx**2 + dy**2) == 0 else sqrt(dx**2 + dy**2)
 
-    pygame.draw.line(screen, WHITE, (CONFIG['screen_width']/2, 0), (CONFIG['screen_width']/2, CONFIG['screen_height']), 1)
-    pygame.draw.line(screen, WHITE, (0, CONFIG['screen_height']/2), (CONFIG['screen_width'], CONFIG['screen_height']/2), 1)
+    v_stick1 = (
+        0.15*(dy/vector_length - dx/vector_length),
+        -0.15*(dx/vector_length + dy/vector_length)
+    ) 
+
+    v_stick2 = (
+        -0.15*(dy/vector_length + dx/vector_length),
+        0.15*(dx/vector_length - dy/vector_length)
+    )
+
+    x_component = origin_point[0] + dx
+    y_component = origin_point[1] + dy
+
+    pygame.draw.line(screen, color, convert_coords((origin_point[0], origin_point[1]), 1), convert_coords((x_component, y_component), 1), 3)
+    pygame.draw.line(screen, color, convert_coords((x_component, y_component), 1), convert_coords((x_component + v_stick1[0], y_component + v_stick1[1]), 1), 3)
+    pygame.draw.line(screen, color, convert_coords((x_component, y_component), 1), convert_coords((x_component + v_stick2[0], y_component + v_stick2[1]), 1), 3)
 
 
 def real_functions(function, xd_min, xd_max, dx=0.01, color=(255, 255, 0)):
-    
     x = xd_min
     function_points = []
     while xd_min <= x <= xd_max:
