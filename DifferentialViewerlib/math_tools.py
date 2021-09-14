@@ -1,5 +1,9 @@
 import pygame
 import pygame.gfxdraw
+import matplotlib.pyplot as plt
+import os
+import numpy as np
+from PIL import Image
 from pygame.locals import *
 from math import *
 
@@ -59,7 +63,7 @@ class Viewer():
                     pygame.quit()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT:
-                        if self.slide_index > 1:
+                        if self.slide_index >= 1:
                             self.slide_index -= 1
                     if event.key == pygame.K_RIGHT:
                         if self.slide_index < len(self.slides) - 1:
@@ -259,6 +263,39 @@ def limit_aproximation(func, h, delta, color=(255, 255, 0)):
     pygame.draw.circle(screen, color, standard_limit, 4)
 
     return func(h)
+
+
+def latex_text(equation, name_file, position=None, scale=0.3):
+    my_path = os.path.dirname(os.path.realpath(__file__))
+
+    if not os.path.isfile(my_path + '/img/{}.png'.format(name_file)):
+        eq = equation.strip('$').replace(' ', '')
+
+        fig = plt.figure()
+        ax = plt.axes([0,0,1,1])
+        r = fig.canvas.get_renderer()
+
+        t = ax.text(0.5, 0.5, '${}$'.format(eq), fontsize=50, 
+        horizontalalignment='center', verticalalignment='center', color='white')
+
+        bb = t.get_window_extent(renderer=r)
+        w,h = bb.width/fig.dpi, np.ceil(bb.height/fig.dpi)
+        fig.set_size_inches((w, h))
+
+        plt.xlim([0,1])
+        plt.ylim([0,1])
+        ax.grid(False)
+        ax.set_axis_off()
+
+        plt.savefig(my_path + '/img/{}.png'.format(name_file), transparent=True)
+    else:
+        formula = pygame.image.load(my_path + '/img/{}.png'.format(name_file))
+
+        formula_img = Image.open(my_path + '/img/{}.png'.format(name_file))
+        width, height = formula_img.size
+
+        formula_scaled = pygame.transform.scale(formula, (round(width*0.3), round(height*0.3)))
+        screen.blit(formula_scaled, position)
 
 # TODO
 def differential(x, y, z):

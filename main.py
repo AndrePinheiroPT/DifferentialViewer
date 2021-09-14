@@ -17,6 +17,7 @@ viewer = Viewer(CONFIG)
 
 def slide1():
     cartesian_plane()
+    latex_text('x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}', 'quadratic', (0, 0), 0.1)
     linear_transformation([
         [3,2], 
         [-2, 1]
