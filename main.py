@@ -17,13 +17,15 @@ viewer = Viewer(CONFIG)
 
 def slide1():
     cartesian_plane()
+    latex_text(r"\begin{pmatrix}3\\-2\end{pmatrix}", 'vector1', (3, -2))
+    #latex_text(r"\begin{pmatrix}2\\1\end{pmatrix}", 'vector2', (2 + 0.3, 3))
     linear_transformation([
-        [3,2], 
-        [-2, 1]
+        [3,viewer.mouse_state[0]], 
+        [-2, viewer.mouse_state[1]]
     ])
-    vector(2, 1, (215, 0, 0), [0, 0])
+    vector(viewer.mouse_state[0], viewer.mouse_state[1], (215, 0, 0), [0, 0])
     vector(3, -2, (0, 225, 0), [0, 0])
-    vector(5, -1, (162, 40, 255), [0, 0])
+    vector(3 + viewer.mouse_state[0], -2 + viewer.mouse_state[1], (162, 40, 255), [0, 0])
 
 def slide2():
     cartesian_plane()
