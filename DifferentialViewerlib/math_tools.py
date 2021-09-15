@@ -1,6 +1,7 @@
 import pygame
 import pygame.gfxdraw
 import matplotlib.pyplot as plt
+from matplotlib import rcParams
 import os
 import numpy as np
 from PIL import Image
@@ -33,6 +34,10 @@ class Viewer():
         self.mouse_state = []
         self.config = config
         self.time = 0
+
+        path = os.path.dirname(os.path.realpath(__file__)) + '/img'
+        for f in os.listdir(path):
+            os.remove(os.path.join(path, f))
     
     def set_slides(self, slides):
         self.slides = slides
@@ -122,8 +127,8 @@ def cartesian_plane():
 
 
 def linear_transformation(matrix):
-    alpha = CONFIG['screen_width']/matrix[0][0]
-    beta = CONFIG['screen_height']/matrix[1][1]
+    alpha = CONFIG['screen_width']/ (0.001 if matrix[0][0] == 0 else matrix[0][0])
+    beta = CONFIG['screen_height']/ (0.001 if matrix[1][1] == 0 else matrix[1][1])
 
     n = round(CONFIG['x_min'])
     while n <= CONFIG['x_max']:
@@ -265,8 +270,10 @@ def limit_aproximation(func, h, delta, color=(255, 255, 0)):
     return func(h)
 
 
-def latex_text(equation, name_file, position=None, scale=0.3):
+def latex_text(equation, name_file, position=None, scaler=0.15, update=False):
     my_path = os.path.dirname(os.path.realpath(__file__))
+    rcParams['text.usetex'] = True
+    rcParams['text.latex.preamble'] = r'\usepackage{{amsmath}}'
 
     if not os.path.isfile(my_path + '/img/{}.png'.format(name_file)):
         eq = equation.strip('$').replace(' ', '')
@@ -275,12 +282,12 @@ def latex_text(equation, name_file, position=None, scale=0.3):
         ax = plt.axes([0,0,1,1])
         r = fig.canvas.get_renderer()
 
-        t = ax.text(0.5, 0.5, '${}$'.format(eq), fontsize=50, 
+        t = ax.text(0.5, 0.5, '${}$'.format(eq), fontsize=200, 
         horizontalalignment='center', verticalalignment='center', color='white')
 
         bb = t.get_window_extent(renderer=r)
         w,h = bb.width/fig.dpi, np.ceil(bb.height/fig.dpi)
-        fig.set_size_inches((w, h))
+        fig.set_size_inches((0.1+w, 0.1+h))
 
         plt.xlim([0,1])
         plt.ylim([0,1])
@@ -294,8 +301,8 @@ def latex_text(equation, name_file, position=None, scale=0.3):
         formula_img = Image.open(my_path + '/img/{}.png'.format(name_file))
         width, height = formula_img.size
 
-        formula_scaled = pygame.transform.scale(formula, (round(width*0.3), round(height*0.3)))
-        screen.blit(formula_scaled, position)
+        formula_scaled = pygame.transform.scale(formula, (round(width*scaler), round(height*scaler)))
+        screen.blit(formula_scaled, convert_coords(position, 1))
 
 # TODO
 def differential(x, y, z):
