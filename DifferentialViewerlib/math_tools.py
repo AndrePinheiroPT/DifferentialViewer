@@ -1,12 +1,13 @@
 import pygame
 import pygame.gfxdraw
-import matplotlib.pyplot as plt
-from matplotlib import rcParams
+from sympy import preview
 import os
 import numpy as np
 from PIL import Image
 from pygame.locals import *
 from math import *
+from io import BytesIO 
+import shutil 
 
 CONFIG = {
     'screen_width': 900,
@@ -260,49 +261,25 @@ def riemann_rectangles(func, x_min, x_max, n, color_init=[131, 47, 0, 200], colo
     return total_sum
 
 
-def limit_aproximation(func, h, delta, color=(255, 255, 0)):
+def limit_aproximation(func, h, delta, r=True, color=(255, 255, 0)):
     real_functions(func, h - delta, h + delta)
     standard_limit = convert_coords((h, func(h)), 1)
     for i in range(0, 2):
         standard_limit[i] = round(standard_limit[i])
     pygame.draw.circle(screen, color, standard_limit, 4)
 
-    return func(h)
+    return func(h + delta if r else h - delta)
 
 
-def latex_text(equation, name_file, position=None, scaler=0.15, update=False):
+def latex_text(formula, name_file, position=None, dpi=150):
     my_path = os.path.dirname(os.path.realpath(__file__))
-    rcParams['text.usetex'] = True
-    rcParams['text.latex.preamble'] = r'\usepackage{{amsmath}}'
 
     if not os.path.isfile(my_path + '/img/{}.png'.format(name_file)):
-        eq = equation.strip('$').replace(' ', '')
-
-        fig = plt.figure()
-        ax = plt.axes([0,0,1,1])
-        r = fig.canvas.get_renderer()
-
-        t = ax.text(0.5, 0.5, '${}$'.format(eq), fontsize=200, 
-        horizontalalignment='center', verticalalignment='center', color='white')
-
-        bb = t.get_window_extent(renderer=r)
-        w,h = bb.width/fig.dpi, np.ceil(bb.height/fig.dpi)
-        fig.set_size_inches((0.1+w, 0.1+h))
-
-        plt.xlim([0,1])
-        plt.ylim([0,1])
-        ax.grid(False)
-        ax.set_axis_off()
-
-        plt.savefig(my_path + '/img/{}.png'.format(name_file), transparent=True)
+        preview(rf'$${formula}$$', viewer='file', filename='{}.png'.format(name_file), euler=False, dvioptions=["-T", "tight", "-z", "0", "--truecolor", f"-D {dpi}", "-bg", "Transparent", "-fg", "White"])
+        shutil.move(os.path.abspath(__file__ + "/../../") + '/{}.png'.format(name_file), my_path + '/img/{}.png'.format(name_file))
     else:
         formula = pygame.image.load(my_path + '/img/{}.png'.format(name_file))
-
-        formula_img = Image.open(my_path + '/img/{}.png'.format(name_file))
-        width, height = formula_img.size
-
-        formula_scaled = pygame.transform.scale(formula, (round(width*scaler), round(height*scaler)))
-        screen.blit(formula_scaled, convert_coords(position, 1))
+        screen.blit(formula, convert_coords(position, 1))
 
 # TODO
 def differential(x, y, z):
