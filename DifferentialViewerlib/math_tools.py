@@ -23,7 +23,6 @@ CONFIG = {
 CYAN = (55, 55, 55)
 WHITE = (255, 255, 255)
 YELLOW = (255, 255, 0)
-state = [0, 0]
 standard_values = []
 screen = None
 font = None
@@ -77,15 +76,6 @@ class Viewer():
 
             self.time += 0.01
             pygame.display.update()
-
-
-def update_standard_values():
-    global settings
-    standard_values = [
-        (CONFIG['screen_width']/2) * (state[0]/CONFIG['x_max'] + 1),
-        (CONFIG['screen_height']/2) * (1 - state[1]/CONFIG['y_max'])
-    ]
-    
 
 def convert_coords(coords, standard):
     if standard:
@@ -281,22 +271,22 @@ def latex_text(formula, name_file, position=None, dpi=150):
         formula = pygame.image.load(my_path + '/img/{}.png'.format(name_file))
         screen.blit(formula, convert_coords(position, 1))
 
-# TODO
-def differential(x, y, z):
-        dt = 0.01
-        #dx = (10 * (y - x)) * dt
-        #dy = (x * (24 - z) - y) * dt
-        #dz = (x * y - 8/3 * z) * dt
+#def lorenz(init_c):
+    #dx = (-init_c[1] - 0.1 * init_c[0])
+    #dy = (init_c[0]  - 0.4 * init_c[1])
+    #return [dx, dy]
 
-        dx = (-y - 0.1 * x) * dt
-        dy = (x - 0.4 * y) * dt
-        dz = 0
+point = []
+def differential(func, init_c, dt=0.01):
+    ds = func(init_c)
+    if len(point) == 0:
+        point.append(init_c)
 
-        state[0] += dx
-        state[1] += dy
-        state[2] += dz
-        update_standard_values()
-        points.append((standard_values[0], standard_values[1])) 
+    init_c[0] += ds[0]*dt
+    init_c[1] += ds[1]*dt
+    point.append(init_c)
+
+    pygame.draw.circle(screen, color, init_c, 4)
 
 
 def complex_conjectures(a, b, sum_length):
