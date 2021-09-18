@@ -5,15 +5,18 @@ from pygame.locals import *
 CONFIG = {
     'screen_width': 600,
     'screen_height': 600,
-    'x_min': -1,
-    'x_max': 10,
-    'y_min': -1,
-    'y_max': 10,
+    'x_min': -20,
+    'x_max': 20,
+    'x_length': 5,
+    'y_min': -5,
+    'y_max': 45,
+    'y_length': 5,
     'x_label': 'X',
     'y_label': 'Y'
 }
 
 viewer = Viewer(CONFIG)
+time = 0
 
 def slide1():
     cartesian_plane()
@@ -36,11 +39,17 @@ def slide2():
     latex_text(r"\displaystyle \lim_{x \to 3} f(x) = " + r"{}".format(lim_value), 'limit', (1, 3.5))
     latex_text(r"\int_{2}^{7}f(x) dx = " + r"{:.1f}".format(rect_sum), 'rect_sum', (3, 2.2))
 
+def lorenz(init_c):
+    dx = (10*(init_c[2] - init_c[0]))*0.01
+    dy = (init_c[0]*(28 - init_c[1]) - init_c[2])*0.01
+    dz = (init_c[0]*init_c[2] - 8/3*init_c[1])*0.01
+    return [dx, dz, dy]
+
 def slide3():
+    global time
     cartesian_plane()
-    real_functions(lambda x: (x-3)*(x+2)*(x+1)+4, -6, 6, color=(87, 0, 240))
-    limit_aproximation(lambda x: (x-3)*(x+2)*(x+1)+4, 3, 0.5)
-    derivative_line(lambda x: (x-3)*(x+2)*(x+1)+4, viewer.mouse_state[0], 3)
+    differential(lorenz, [-6, 30, 0], time, color=(255, 255, 0), dt=0.01)
+    time += 0.01
 
 def slide4():
     cartesian_plane()

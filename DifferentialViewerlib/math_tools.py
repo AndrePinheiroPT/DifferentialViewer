@@ -13,9 +13,11 @@ CONFIG = {
     'screen_width': 900,
     'screen_height': 600,
     'x_max': 8,
+    'y_length': 1,
     'y_max': 3,
     'x_min': -1,
     'y_min': -1,
+    'y_length': 1,
     'x_label': 'Re',
     'y_label': 'Im'
 }
@@ -42,6 +44,9 @@ class Viewer():
     def set_slides(self, slides):
         self.slides = slides
 
+    def set_config(self, config):
+        self.config = config
+
     def init(self):
         global screen, font, CONFIG
         CONFIG = self.config
@@ -60,7 +65,7 @@ class Viewer():
             clock.tick(100)
             screen.fill((0, 0, 0))
             self.mouse_state = convert_coords(pygame.mouse.get_pos(), 0)
-
+            
             self.slides[self.slide_index]()
 
             for event in pygame.event.get():
@@ -86,7 +91,7 @@ def convert_coords(coords, standard):
     else:
         return [
             coords[0] * (CONFIG['x_max'] - CONFIG['x_min']) / CONFIG['screen_width'] + CONFIG['x_min'],
-            -coords[1] * (CONFIG['y_max'] - CONFIG['y_min']) / CONFIG['screen_height'] + CONFIG['x_max']
+            -coords[1] * (CONFIG['y_max'] - CONFIG['y_min']) / CONFIG['screen_height'] + CONFIG['y_max']
         ]
 
 
@@ -94,20 +99,20 @@ def cartesian_plane():
     x_value = round(CONFIG['x_min'])
     y_value = round(CONFIG['y_min'])
 
-    unit_lenght_x = round(convert_coords((0, 0), 1)[0] - convert_coords((-1, 0), 1)[0])
-    unit_lenght_y = convert_coords((0, 0), 1)[1] - convert_coords((0, 1), 1)[1]
+    unit_lenght_x = round(convert_coords((0, 0), 1)[0] - convert_coords((-CONFIG['x_length'], 0), 1)[0])
+    unit_lenght_y = convert_coords((0, 0), 1)[1] - convert_coords((0, CONFIG['y_length']), 1)[1]
 
     for x in range(round(convert_coords((round(CONFIG['x_min']), 0),1)[0]), CONFIG['screen_width'], unit_lenght_x):
         pygame.draw.line(screen, CYAN, (x, 0), (x, CONFIG['screen_height']), 1)
         screen.blit(font.render(f'{x_value:.1f}', False, WHITE), (x+2, convert_coords((0, 0), 1)[1]))
-        x_value += 1
+        x_value += CONFIG['x_length']
         
     y = round(convert_coords((0, round(CONFIG['y_min'])), 1)[1])
     while y >= 0:
         pygame.draw.line(screen, CYAN, (0, y), (CONFIG['screen_width'], y), 1)
         if y_value != 0:
             screen.blit(font.render(f'{y_value:.1f}', False, WHITE), (convert_coords((0, 0), 1)[0]+3, y-12))
-        y_value += 1
+        y_value += CONFIG['y_length']
         y -= unit_lenght_y
 
     screen.blit(font.render(f'{CONFIG["x_label"]}', False, WHITE), (CONFIG['screen_width'] - 10, convert_coords((0, 0), 1)[1]))
@@ -121,15 +126,15 @@ def linear_transformation(matrix):
     alpha = CONFIG['screen_width']/ (0.001 if matrix[0][0] == 0 else matrix[0][0])
     beta = CONFIG['screen_height']/ (0.001 if matrix[1][1] == 0 else matrix[1][1])
 
-    n = round(CONFIG['x_min'])
-    while n <= CONFIG['x_max']:
+    n = -10
+    while n <= 10:
         pygame.draw.line(screen, YELLOW, 
         convert_coords((-beta*matrix[0][1] + n*matrix[0][0], -beta*matrix[1][1] + n*matrix[1][0]), 1), 
         convert_coords((beta*matrix[0][1] + n*matrix[0][0], beta*matrix[1][1] + n*matrix[1][0]), 1))
         n += 1
 
-    n = round(CONFIG['y_min']) 
-    while n <= CONFIG['y_max']:
+    n = -10
+    while n <= 10:
         pygame.draw.line(screen, YELLOW, 
         convert_coords((-alpha*matrix[0][0] + n*matrix[0][1], -alpha*matrix[1][0] + n*matrix[1][1]), 1), 
         convert_coords((alpha*matrix[0][0] + n*matrix[0][1], alpha*matrix[1][0] + n*matrix[1][1]), 1))
@@ -212,7 +217,6 @@ def vector_field(func, space, scalar, color=(0, 255, 0)):
 
 
 def derivative_line(func, x, range_line, h=0.0001, color=(230, 0, 85)):
-    
     derivative = 0
 
     derivative = (func(x+h) - func(x)) / h  # slope
@@ -271,22 +275,24 @@ def latex_text(formula, name_file, position=None, dpi=150):
         formula = pygame.image.load(my_path + '/img/{}.png'.format(name_file))
         screen.blit(formula, convert_coords(position, 1))
 
-#def lorenz(init_c):
-    #dx = (-init_c[1] - 0.1 * init_c[0])
-    #dy = (init_c[0]  - 0.4 * init_c[1])
-    #return [dx, dy]
 
-point = []
-def differential(func, init_c, dt=0.01):
-    ds = func(init_c)
-    if len(point) == 0:
-        point.append(init_c)
+def differential(func, init_c, t_max, color=(255, 255, 0), dt=0.01):
+    point_list = []
 
-    init_c[0] += ds[0]*dt
-    init_c[1] += ds[1]*dt
-    point.append(init_c)
+    time = 0
+    new_c = init_c
+    while time <= t_max:
+        ds = func(new_c)
+        if len(point_list) == 0:
+            point_list.append(convert_coords(new_c[:2], 1))
 
-    pygame.draw.circle(screen, color, init_c, 4)
+        for i in range(0, 3):
+            new_c[i] += ds[i]
+        point_list.append(convert_coords(new_c[:2], 1))
+        time += dt
+
+    pygame.draw.circle(screen, color, [round(axie) for axie in convert_coords(new_c[:2], 1)], 4)
+    pygame.draw.lines(screen, color, False, point_list, 3)
 
 
 def complex_conjectures(a, b, sum_length):
