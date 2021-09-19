@@ -5,11 +5,11 @@ from pygame.locals import *
 CONFIG = {
     'screen_width': 600,
     'screen_height': 600,
-    'x_min': -20,
-    'x_max': 20,
+    'x_min': -10,
+    'x_max': 10,
     'x_length': 5,
-    'y_min': -5,
-    'y_max': 45,
+    'y_min': -10,
+    'y_max': 10,
     'y_length': 5,
     'x_label': 'X',
     'y_label': 'Y'
@@ -25,9 +25,9 @@ def slide1():
         [2,viewer.mouse_state[0]], 
         [1, viewer.mouse_state[1]]
     ])
-    vector(viewer.mouse_state[0], viewer.mouse_state[1], (215, 0, 0), [0, 0])
-    vector(2, 1, (0, 225, 0), [0, 0])
-    vector(2 + viewer.mouse_state[0], 1 + viewer.mouse_state[1], (162, 40, 255), [0, 0])
+    vector(viewer.mouse_state[0], viewer.mouse_state[1], (215, 0, 0))
+    vector(2, 1, (0, 225, 0))
+    vector(2 + viewer.mouse_state[0], 1 + viewer.mouse_state[1], (162, 40, 255))
 
 def slide2():
     cartesian_plane()
@@ -51,12 +51,19 @@ def slide3():
     differential(lorenz, [-6, 30, 0], time, color=(255, 255, 0), dt=0.01)
     time += 0.01
 
+def circle(t):
+    x = 5*cos(t)
+    y = 5*sin(t)
+    return [x, y]
+
+theta = 0
 def slide4():
+    global theta
     cartesian_plane()
-    riemann_rectangles(lambda x: (x-3)*(x+2)*(x+1)+4, 0, 2.75, 10)
-    real_functions(lambda x: (x-3)*(x+2)*(x+1)+4, -6, 6, color=(87, 0, 240))
-    limit_aproximation(lambda x: (x-3)*(x+2)*(x+1)+4, 3, 0.5)
-    derivative_line(lambda x: (x-3)*(x+2)*(x+1)+4, viewer.mouse_state[0], 3)
+    parametric_functions(circle, 0, 2*pi, color=(0, 200, 0))
+    vector(5*cos(theta), 5*sin(theta), (255, 225, 0))
+    latex_text(r"e^{i" + rf"{theta:.2f}" + r"}", f'euler_i{theta:.2f}', [5*cos(theta) ,5*sin(theta)])
+    theta += 0.01
 
 
 viewer.set_slides([slide2, slide1, slide3, slide4])

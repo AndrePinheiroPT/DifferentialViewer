@@ -141,7 +141,7 @@ def linear_transformation(matrix):
         n += 1
     
 
-def vector(dx, dy, color, origin_point):
+def vector(dx, dy, color, origin_point=[0, 0]):
     vector_length = 0.001 if sqrt(dx**2 + dy**2) == 0 else sqrt(dx**2 + dy**2)
 
     v_stick1 = (
@@ -266,14 +266,11 @@ def limit_aproximation(func, h, delta, r=True, color=(255, 255, 0)):
 
 
 def latex_text(formula, name_file, position=None, dpi=150):
-    my_path = os.path.dirname(os.path.realpath(__file__))
-
-    if not os.path.isfile(my_path + '/img/{}.png'.format(name_file)):
-        preview(rf'$${formula}$$', viewer='file', filename='{}.png'.format(name_file), euler=False, dvioptions=["-T", "tight", "-z", "0", "--truecolor", f"-D {dpi}", "-bg", "Transparent", "-fg", "White"])
-        shutil.move(os.path.abspath(__file__ + "/../../") + '/{}.png'.format(name_file), my_path + '/img/{}.png'.format(name_file))
-    else:
-        formula = pygame.image.load(my_path + '/img/{}.png'.format(name_file))
-        screen.blit(formula, convert_coords(position, 1))
+    obj = BytesIO()
+    preview(rf'$${formula}$$', filename='{}.png'.format(name_file), euler=False, outputbuffer=obj, viewer='BytesIO', dvioptions=["-T", "tight", "-z", "0", "--truecolor", f"-D {dpi}", "-bg", "Transparent", "-fg", "White"])
+    obj.seek(0)
+    formula = pygame.image.load(obj)
+    screen.blit(formula, convert_coords(position, 1))
 
 
 def differential(func, init_c, t_max, color=(255, 255, 0), dt=0.01):
@@ -294,6 +291,14 @@ def differential(func, init_c, t_max, color=(255, 255, 0), dt=0.01):
     pygame.draw.circle(screen, color, [round(axie) for axie in convert_coords(new_c[:2], 1)], 4)
     pygame.draw.lines(screen, color, False, point_list, 3)
 
+def parametric_functions(func, t_min, t_max, color=(255, 255, 0), dt=0.01):
+    point_list = []
+    t = t_min
+    while t <= t_max:
+        point_list.append(convert_coords(func(t), 1))
+        t += dt
+        
+    pygame.draw.lines(screen, color, False, point_list, 3)
 
 def complex_conjectures(a, b, sum_length):
     global points
