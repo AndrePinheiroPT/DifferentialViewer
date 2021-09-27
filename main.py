@@ -12,7 +12,9 @@ CONFIG = {
     'y_max': 10,
     'y_length': 5,
     'x_label': 'X',
-    'y_label': 'Y'
+    'y_label': 'Y',
+    'theta': 2.1,
+    'phi': -0.4
 }
 
 viewer = Viewer(CONFIG)
@@ -21,6 +23,7 @@ time = 0
 def slide1():
     cartesian_plane()
     #latex_text(r"\begin{pmatrix}2\\1\end{pmatrix}", 'vector1', (3, -2))
+    convert_3d_to_2d((1,1,1))
     linear_transformation([
         [2,viewer.mouse_state[0]], 
         [1, viewer.mouse_state[1]]

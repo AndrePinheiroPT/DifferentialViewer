@@ -122,6 +122,22 @@ def cartesian_plane():
     pygame.draw.line(screen, WHITE, (0, convert_coords((0, 0), 1)[1]), (CONFIG['screen_width'], convert_coords((0, 0), 1)[1]), 1)
 
 
+def convert_3d_to_2d(point):
+    matrix = (
+        (cos(CONFIG['phi']), -sin(CONFIG['phi']), 0),
+        (sin(CONFIG['phi'])*cos(CONFIG['theta']), cos(CONFIG['phi'])*cos(CONFIG['theta']), sin(CONFIG['theta'])),
+        (0, 0, 0)
+    )
+
+    new_point = [0, 0]
+    for k in range(0, 2):
+        for i in range(0, 3):
+            new_point[k] += matrix[k][i]*point[i]
+            
+    return new_point
+
+#def three_dimensional_space():
+
 def linear_transformation(matrix):
     alpha = CONFIG['screen_width']/ (0.001 if matrix[0][0] == 0 else matrix[0][0])
     beta = CONFIG['screen_height']/ (0.001 if matrix[1][1] == 0 else matrix[1][1])
