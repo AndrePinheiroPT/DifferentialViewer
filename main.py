@@ -20,7 +20,7 @@ time = 0
 
 def slide1():
     cartesian_plane()
-    latex_text(r"\begin{pmatrix}2\\1\end{pmatrix}", 'vector1', (3, -2))
+    #latex_text(r"\begin{pmatrix}2\\1\end{pmatrix}", 'vector1', (3, -2))
     linear_transformation([
         [2,viewer.mouse_state[0]], 
         [1, viewer.mouse_state[1]]
@@ -36,8 +36,8 @@ def slide2():
     lim_value = limit_aproximation(lambda x: x*0.5+1, 3, 0.01)
     
     rect_sum = riemann_rectangles(lambda x: x*0.5+1, 2, 7, 30)
-    latex_text(r"\displaystyle \lim_{x \to 3} f(x) = " + r"{}".format(lim_value), 'limit', (1, 3.5))
-    latex_text(r"\int_{2}^{7}f(x) dx = " + r"{:.1f}".format(rect_sum), 'rect_sum', (3, 2.2))
+    #latex_text(r"\displaystyle \lim_{x \to 3} f(x) = " + r"{}".format(lim_value), 'limit', (1, 3.5))
+    #latex_text(r"\int_{2}^{7}f(x) dx = " + r"{:.1f}".format(rect_sum), 'rect_sum', (3, 2.2))
 
 def lorenz(init_c):
     dx = (10*(init_c[2] - init_c[0]))*0.01
@@ -62,7 +62,7 @@ def slide4():
     cartesian_plane()
     parametric_functions(circle, 0, 2*pi, color=(0, 200, 0))
     vector(5*cos(theta), 5*sin(theta), (255, 225, 0))
-    latex_text(r"e^{i" + rf"{theta:.2f}" + r"}", f'euler_i{theta:.2f}', [5*cos(theta) ,5*sin(theta)])
+    #latex_text(r"e^{i" + rf"{theta:.2f}" + r"}", f'euler_i{theta:.2f}', [5*cos(theta) ,5*sin(theta)])
     theta += 0.01
 
 
