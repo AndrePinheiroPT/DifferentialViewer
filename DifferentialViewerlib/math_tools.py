@@ -122,10 +122,10 @@ def cartesian_plane():
     pygame.draw.line(screen, WHITE, (0, convert_coords((0, 0), 1)[1]), (CONFIG['screen_width'], convert_coords((0, 0), 1)[1]), 1)
 
 
-def convert_3d_to_2d(point):
+def coord3d2d(point, phi, theta):
     matrix = (
-        (cos(CONFIG['phi']), -sin(CONFIG['phi']), 0),
-        (sin(CONFIG['phi'])*cos(CONFIG['theta']), cos(CONFIG['phi'])*cos(CONFIG['theta']), sin(CONFIG['theta'])),
+        (cos(phi), -sin(phi), 0),
+        (sin(phi)*cos(theta), cos(phi)*cos(theta), sin(theta)),
         (0, 0, 0)
     )
 
@@ -136,11 +136,26 @@ def convert_3d_to_2d(point):
             
     return new_point
 
-#def three_dimensional_space():
+def three_dimensional_space(phi, theta):
+    e1 = coord3d2d((1, 0, 0), phi, theta)
+    e2 = coord3d2d((0, 1, 0), phi, theta)
+    e3 = coord3d2d((0, 0, 1), phi, theta)
+    alpha = CONFIG['screen_width']/(0.001 if e1[0] == 0 else e1[0])
+    beta = CONFIG['screen_width']/(0.001 if e2[0] == 0 else e2[0])
+    gamma = CONFIG['screen_width']/(0.001 if e3[0] == 0 else e3[0])
+
+
+    pygame.draw.line(screen, WHITE, convert_coords([-alpha*axe for axe in e1], 1), 
+    convert_coords([alpha*axe for axe in e1], 1))
+    pygame.draw.line(screen, WHITE, convert_coords([-beta*axe for axe in e2], 1), 
+    convert_coords([beta*axe for axe in e2], 1))
+    pygame.draw.line(screen, WHITE, convert_coords([-gamma*axe for axe in e3], 1), 
+    convert_coords([gamma*axe for axe in e3], 1))
+
 
 def linear_transformation(matrix):
-    alpha = CONFIG['screen_width']/ (0.001 if matrix[0][0] == 0 else matrix[0][0])
-    beta = CONFIG['screen_height']/ (0.001 if matrix[1][1] == 0 else matrix[1][1])
+    alpha = CONFIG['screen_width']/(0.001 if matrix[0][0] == 0 else matrix[0][0])
+    beta = CONFIG['screen_height']/(0.001 if matrix[1][1] == 0 else matrix[1][1])
 
     n = -10
     while n <= 10:
