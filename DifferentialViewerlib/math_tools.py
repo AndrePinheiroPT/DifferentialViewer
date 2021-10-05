@@ -54,20 +54,18 @@ class Viewer():
 
         screen = pygame.display.set_mode((CONFIG['screen_width'], CONFIG['screen_height']))
         pygame.display.set_caption('DifferentialViewer')
-
-        draw_surface = pygame.Surface((CONFIG['screen_width'], CONFIG['screen_height']))
-
+        pygame.Surface((CONFIG['screen_width'], CONFIG['screen_height']))
         pygame.font.init()
         font = pygame.font.SysFont('Arial', 12)
-
         clock = pygame.time.Clock()
+        
         while True:
             clock.tick(100)
             screen.fill((0, 0, 0))
             self.mouse_state = convert_coords(pygame.mouse.get_pos(), 0)
             
             self.slides[self.slide_index]()
-
+            
             for event in pygame.event.get():
                 if event.type == QUIT:
                     pygame.quit()
@@ -121,36 +119,51 @@ def cartesian_plane():
     pygame.draw.line(screen, WHITE, (convert_coords((0, 0), 1)[0], 0), (convert_coords((0, 0), 1)[0], CONFIG['screen_height']), 1)
     pygame.draw.line(screen, WHITE, (0, convert_coords((0, 0), 1)[1]), (CONFIG['screen_width'], convert_coords((0, 0), 1)[1]), 1)
 
+can_change = False
+prev_state = None
+class Scense3D:
+    def __init__(self, theta, phi):
+        self.theta = theta
+        self.phi = phi 
 
-def coord3d2d(point, phi, theta):
-    matrix = (
-        (cos(phi), -sin(phi), 0),
-        (sin(phi)*cos(theta), cos(phi)*cos(theta), sin(theta)),
-        (0, 0, 0)
-    )
+    def check_mouse(self):
+        global can_change, prev_state
+        mouse_state = convert_coords(pygame.mouse.get_pos(), 0)
 
-    new_point = [0, 0]
-    for k in range(0, 2):
-        for i in range(0, 3):
-            new_point[k] += matrix[k][i]*point[i]
-            
-    return new_point
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                prev_state = mouse_state
+                can_change = True
+            if event.type == pygame.MOUSEBUTTONUP:
+                can_change = False
 
-def three_dimensional_space(phi, theta):
-    e1 = coord3d2d((1, 0, 0), phi, theta)
-    e2 = coord3d2d((0, 1, 0), phi, theta)
-    e3 = coord3d2d((0, 0, 1), phi, theta)
-    alpha = CONFIG['screen_width']/(0.001 if e1[0] == 0 else e1[0])
-    beta = CONFIG['screen_width']/(0.001 if e2[0] == 0 else e2[0])
-    gamma = CONFIG['screen_width']/(0.001 if e3[0] == 0 else e3[0])
+        if can_change:
+            self.theta = mouse_state[1] - prev_state[1]
+            self.phi = mouse_state[0] - prev_state[0]
+        
+    def coord3d2d(self, point):
+        matrix = (
+            (cos(self.phi), -sin(self.phi), 0),
+            (sin(self.phi)*cos(self.theta), cos(self.phi)*cos(self.theta), sin(self.theta)),
+            (0, 0, 0)
+        )
 
+        new_point = [0, 0]
+        for k in range(0, 2):
+            for i in range(0, 3):
+                new_point[k] += matrix[k][i]*point[i]
+                
+        return new_point
 
-    pygame.draw.line(screen, WHITE, convert_coords([-alpha*axe for axe in e1], 1), 
-    convert_coords([alpha*axe for axe in e1], 1))
-    pygame.draw.line(screen, WHITE, convert_coords([-beta*axe for axe in e2], 1), 
-    convert_coords([beta*axe for axe in e2], 1))
-    pygame.draw.line(screen, WHITE, convert_coords([-gamma*axe for axe in e3], 1), 
-    convert_coords([gamma*axe for axe in e3], 1))
+    def three_dimensional_space(self, scale=3):
+        self.check_mouse()
+        e1 = self.coord3d2d((1, 0, 0))
+        e2 = self.coord3d2d((0, 1, 0))
+        e3 = self.coord3d2d((0, 0, 1))
+
+        pygame.draw.line(screen, WHITE, convert_coords([-scale*axe for axe in e1], 1), convert_coords([scale*axe for axe in e1], 1))
+        pygame.draw.line(screen, WHITE, convert_coords([-scale*axe for axe in e2], 1), convert_coords([scale*axe for axe in e2], 1))
+        pygame.draw.line(screen, WHITE, convert_coords([-scale*axe for axe in e3], 1), convert_coords([scale*axe for axe in e3], 1))
 
 
 def linear_transformation(matrix):
