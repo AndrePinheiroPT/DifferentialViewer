@@ -122,13 +122,26 @@ def cartesian_plane():
 can_change = False
 prev_state = None
 class Scense3D:
-    def __init__(self, theta, phi):
+    def __init__(self, r, theta, phi):
+        self.r = r
         self.theta = theta
         self.phi = phi 
 
+    def convert(self, coords, standard=True):
+        if standard:
+            return [
+                CONFIG['screen_width']/2*(coords[0] + 1),
+                CONFIG['screen_height']/2*(1 - coords[1])
+            ]
+        else:
+            return [
+                coords[0]*2 / CONFIG['screen_width'] - 1,
+                -coords[1]*2 / CONFIG['screen_height'] + 1
+            ]
+
     def check_mouse(self):
         global can_change, prev_state
-        mouse_state = convert_coords(pygame.mouse.get_pos(), 0)
+        mouse_state = self.convert(pygame.mouse.get_pos(), 0)
 
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -143,8 +156,8 @@ class Scense3D:
         
     def coord3d2d(self, point):
         matrix = (
-            (cos(self.phi), -sin(self.phi), 0),
-            (sin(self.phi)*cos(self.theta), cos(self.phi)*cos(self.theta), sin(self.theta)),
+            ((1/self.r)*cos(self.phi), -(1/self.r)*sin(self.phi), 0),
+            ((1/self.r)*sin(self.phi)*cos(self.theta), (1/self.r)*cos(self.phi)*cos(self.theta), (1/self.r)*sin(self.theta)),
             (0, 0, 0)
         )
 
@@ -155,15 +168,15 @@ class Scense3D:
                 
         return new_point
 
-    def three_dimensional_space(self, scale=3):
+    def three_dimensional_space(self, scale=1):
         self.check_mouse()
         e1 = self.coord3d2d((1, 0, 0))
         e2 = self.coord3d2d((0, 1, 0))
         e3 = self.coord3d2d((0, 0, 1))
 
-        pygame.draw.line(screen, WHITE, convert_coords([-scale*axe for axe in e1], 1), convert_coords([scale*axe for axe in e1], 1))
-        pygame.draw.line(screen, WHITE, convert_coords([-scale*axe for axe in e2], 1), convert_coords([scale*axe for axe in e2], 1))
-        pygame.draw.line(screen, WHITE, convert_coords([-scale*axe for axe in e3], 1), convert_coords([scale*axe for axe in e3], 1))
+        pygame.draw.line(screen, WHITE, self.convert([-scale*axe for axe in e1]), self.convert([scale*axe for axe in e1]))
+        pygame.draw.line(screen, WHITE, self.convert([-scale*axe for axe in e2]), self.convert([scale*axe for axe in e2]))
+        pygame.draw.line(screen, WHITE, self.convert([-scale*axe for axe in e3]), self.convert([scale*axe for axe in e3]))
 
 
 def linear_transformation(matrix):
