@@ -168,6 +168,19 @@ class Scense3D:
                 
         return new_point
 
+    def vector(self, dx, dy, color, origin_point=[0, 0]):
+        vector_length = 0.001 if sqrt(dx**2 + dy**2) == 0 else sqrt(dx**2 + dy**2)
+
+        branch1 = (0.15*(dy/vector_length - dx/vector_length), -0.15*(dx/vector_length + dy/vector_length)) 
+        branch2 = (-0.15*(dy/vector_length + dx/vector_length),0.15*(dx/vector_length - dy/vector_length))
+
+        x_component = origin_point[0] + dx
+        y_component = origin_point[1] + dy
+
+        pygame.draw.line(screen, color, self.convert((origin_point[0], origin_point[1]), 1), self.convert((x_component, y_component), 1), 3)
+        pygame.draw.line(screen, color, self.convert((x_component, y_component), 1), self.convert((x_component + branch1[0], y_component + branch1[1]), 1), 3)
+        pygame.draw.line(screen, color, self.convert((x_component, y_component), 1), self.convert((x_component + branch2[0], y_component + branch2[1]), 1), 3)
+
     def three_dimensional_space(self, scale=1):
         self.check_mouse()
         e1 = self.coord3d2d((1, 0, 0))
@@ -177,7 +190,6 @@ class Scense3D:
         pygame.draw.line(screen, WHITE, self.convert([-scale*axe for axe in e1]), self.convert([scale*axe for axe in e1]))
         pygame.draw.line(screen, WHITE, self.convert([-scale*axe for axe in e2]), self.convert([scale*axe for axe in e2]))
         pygame.draw.line(screen, WHITE, self.convert([-scale*axe for axe in e3]), self.convert([scale*axe for axe in e3]))
-
 
 def linear_transformation(matrix):
     alpha = CONFIG['screen_width']/(0.001 if matrix[0][0] == 0 else matrix[0][0])
@@ -196,27 +208,9 @@ def linear_transformation(matrix):
         convert_coords((-alpha*matrix[0][0] + n*matrix[0][1], -alpha*matrix[1][0] + n*matrix[1][1]), 1), 
         convert_coords((alpha*matrix[0][0] + n*matrix[0][1], alpha*matrix[1][0] + n*matrix[1][1]), 1))
         n += 1
+        
+
     
-
-def vector(dx, dy, color, origin_point=[0, 0]):
-    vector_length = 0.001 if sqrt(dx**2 + dy**2) == 0 else sqrt(dx**2 + dy**2)
-
-    v_stick1 = (
-        0.15*(dy/vector_length - dx/vector_length),
-        -0.15*(dx/vector_length + dy/vector_length)
-    ) 
-
-    v_stick2 = (
-        -0.15*(dy/vector_length + dx/vector_length),
-        0.15*(dx/vector_length - dy/vector_length)
-    )
-
-    x_component = origin_point[0] + dx
-    y_component = origin_point[1] + dy
-
-    pygame.draw.line(screen, color, convert_coords((origin_point[0], origin_point[1]), 1), convert_coords((x_component, y_component), 1), 3)
-    pygame.draw.line(screen, color, convert_coords((x_component, y_component), 1), convert_coords((x_component + v_stick1[0], y_component + v_stick1[1]), 1), 3)
-    pygame.draw.line(screen, color, convert_coords((x_component, y_component), 1), convert_coords((x_component + v_stick2[0], y_component + v_stick2[1]), 1), 3)
 
 
 def real_functions(function, xd_min, xd_max, dx=0.01, color=(255, 255, 0)):
