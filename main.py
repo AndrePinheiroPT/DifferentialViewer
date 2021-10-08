@@ -19,13 +19,13 @@ viewer = Viewer(CONFIG)
 time = 0
 
 def slide1():
-    tools3D = Scense3D(1, 0, 0)
+    tools3D = Scense3D(8, 0, 0)
     tools3D.three_dimensional_space()
-    tools3D.vector(*tools3D.coord3d2d((1,0,0)), (162, 40, 255))
-    #vector(*coord3d2d((0,1,0), phi, theta), (221, 70, 0))
-    #vector(*coord3d2d((0,0,1), phi, theta), (0, 200, 50))
-    #vector(*coord3d2d((1,1,1), phi, theta), (255, 0, 0))
 
+    tools3D.line([0, 0, 0], [0, 1, 0], 0, 2, (0, 0, 255), 3)
+    tools3D.line([0, 2, 0], [1, 0, 0], 0, 2, (255, 0, 0), 3)
+    tools3D.line([2, 2, 0], [1, 1, 3], -6, 6, (111, 111, 111))
+    tools3D.vector([1, 1, 3], (0, 255, 0), (2, 2, 0))
 
 viewer.set_slides([slide1])
 viewer.init()

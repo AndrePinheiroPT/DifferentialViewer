@@ -127,6 +127,20 @@ class Scense3D:
         self.theta = theta
         self.phi = phi 
 
+    def coord3d2d(self, point):
+        matrix = (
+            ((1/self.r)*cos(self.phi), -(1/self.r)*sin(self.phi), 0),
+            ((1/self.r)*sin(self.phi)*cos(self.theta), (1/self.r)*cos(self.phi)*cos(self.theta), (1/self.r)*sin(self.theta)),
+            (0, 0, 0)
+        )
+
+        new_point = [0, 0]
+        for k in range(0, 2):
+            for i in range(0, 3):
+                new_point[k] += matrix[k][i]*point[i]
+                
+        return new_point
+
     def convert(self, coords, standard=True):
         if standard:
             return [
@@ -153,43 +167,40 @@ class Scense3D:
         if can_change:
             self.theta = mouse_state[1] - prev_state[1]
             self.phi = mouse_state[0] - prev_state[0]
-        
-    def coord3d2d(self, point):
-        matrix = (
-            ((1/self.r)*cos(self.phi), -(1/self.r)*sin(self.phi), 0),
-            ((1/self.r)*sin(self.phi)*cos(self.theta), (1/self.r)*cos(self.phi)*cos(self.theta), (1/self.r)*sin(self.theta)),
-            (0, 0, 0)
-        )
 
-        new_point = [0, 0]
-        for k in range(0, 2):
-            for i in range(0, 3):
-                new_point[k] += matrix[k][i]*point[i]
-                
-        return new_point
+    def vector(self, vect, color, origin=[0, 0, 0], stroke=3):
+        dx = self.coord3d2d(vect)[0]
+        dy = self.coord3d2d(vect)[1]
 
-    def vector(self, dx, dy, color, origin_point=[0, 0]):
         vector_length = 0.001 if sqrt(dx**2 + dy**2) == 0 else sqrt(dx**2 + dy**2)
 
-        branch1 = (0.15*(dy/vector_length - dx/vector_length), -0.15*(dx/vector_length + dy/vector_length)) 
-        branch2 = (-0.15*(dy/vector_length + dx/vector_length),0.15*(dx/vector_length - dy/vector_length))
+        branch1 = (0.025*(dy/vector_length - dx/vector_length), -0.025*(dx/vector_length + dy/vector_length)) 
+        branch2 = (-0.025*(dy/vector_length + dx/vector_length), 0.025*(dx/vector_length - dy/vector_length))
+
+        origin_point = [0, 0]
+        origin_point[0] = self.coord3d2d(origin)[0]
+        origin_point[1] = self.coord3d2d(origin)[1]
 
         x_component = origin_point[0] + dx
         y_component = origin_point[1] + dy
 
-        pygame.draw.line(screen, color, self.convert((origin_point[0], origin_point[1]), 1), self.convert((x_component, y_component), 1), 3)
-        pygame.draw.line(screen, color, self.convert((x_component, y_component), 1), self.convert((x_component + branch1[0], y_component + branch1[1]), 1), 3)
-        pygame.draw.line(screen, color, self.convert((x_component, y_component), 1), self.convert((x_component + branch2[0], y_component + branch2[1]), 1), 3)
+        pygame.draw.line(screen, color, self.convert((origin_point[0], origin_point[1]), 1), self.convert((x_component, y_component), 1), stroke)
+        pygame.draw.line(screen, color, self.convert((x_component, y_component), 1), self.convert((x_component + branch1[0], y_component + branch1[1]), 1), stroke)
+        pygame.draw.line(screen, color, self.convert((x_component, y_component), 1), self.convert((x_component + branch2[0], y_component + branch2[1]), 1), stroke)
 
-    def three_dimensional_space(self, scale=1):
+    def three_dimensional_space(self, scale=6):
         self.check_mouse()
-        e1 = self.coord3d2d((1, 0, 0))
-        e2 = self.coord3d2d((0, 1, 0))
-        e3 = self.coord3d2d((0, 0, 1))
+        self.vector([2*scale, 0, 0], (255, 255, 255), [-scale, 0, 0], 2)
+        self.vector([0, 2*scale, 0], (255, 255, 255), [0, -scale, 0], 2)
+        self.vector([0, 0, 2*scale], (255, 255, 255), [0, 0, -scale], 2)
 
-        pygame.draw.line(screen, WHITE, self.convert([-scale*axe for axe in e1]), self.convert([scale*axe for axe in e1]))
-        pygame.draw.line(screen, WHITE, self.convert([-scale*axe for axe in e2]), self.convert([scale*axe for axe in e2]))
-        pygame.draw.line(screen, WHITE, self.convert([-scale*axe for axe in e3]), self.convert([scale*axe for axe in e3]))
+    def line(self, point, v_direct, l_min, l_max, color, stroke=1):
+        dx = self.coord3d2d(v_direct)[0]
+        dy = self.coord3d2d(v_direct)[1]
+
+        pygame.draw.line(screen, color, self.convert((l_min*dx + self.coord3d2d(point)[0], l_min*dy + self.coord3d2d(point)[1]), 1), self.convert((l_max*dx + self.coord3d2d(point)[0], l_max*dy + self.coord3d2d(point)[1]), 1), stroke)
+
+        
 
 def linear_transformation(matrix):
     alpha = CONFIG['screen_width']/(0.001 if matrix[0][0] == 0 else matrix[0][0])
