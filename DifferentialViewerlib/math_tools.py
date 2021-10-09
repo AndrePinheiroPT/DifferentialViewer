@@ -200,7 +200,42 @@ class Scense3D:
 
         pygame.draw.line(screen, color, self.convert((l_min*dx + self.coord3d2d(point)[0], l_min*dy + self.coord3d2d(point)[1]), 1), self.convert((l_max*dx + self.coord3d2d(point)[0], l_max*dy + self.coord3d2d(point)[1]), 1), stroke)
 
-        
+    def function(self, func, xy_limits, color=(0, 0, 200, 100), dx=0.6, dy=0.6):
+        polygons = []
+        x = xy_limits[0]
+        while x < xy_limits[1]:
+            y = xy_limits[2]
+            while y < xy_limits[3]:
+                ds = []
+                for i in range(0, 2):
+                    for j in range(0 + 1*i, 2 - 3*i, 1 -2*i):
+                        ds.append(self.convert(self.coord3d2d([x + i*dx, y + j*dy, func(x + i*dx, y + j*dy)]) , 1))
+                
+                polygons.append(ds)
+                y += dy
+            x += dx
+         
+        for ds in polygons:
+            pygame.gfxdraw.filled_polygon(screen, ds, color)
+
+    def differential(self, func, init_c, t_max, color=(255, 255, 0), dt=0.01):
+        point_list = []
+
+        time = 0
+        new_c = init_c
+        while time <= t_max:
+            dxyz = func(new_c)
+            if len(point_list) == 0:
+                point_list.append(self.convert(self.coord3d2d(new_c), 1))
+
+            for i in range(0, 3):
+                new_c[i] += dxyz[i] * dt
+
+            point_list.append(self.convert(self.coord3d2d(new_c), 1))
+            time += dt
+
+        pygame.draw.circle(screen, color, [round(axie) for axie in self.convert(self.coord3d2d(new_c), 1)], 4)
+        pygame.draw.lines(screen, color, False, point_list, 3)
 
 def linear_transformation(matrix):
     alpha = CONFIG['screen_width']/(0.001 if matrix[0][0] == 0 else matrix[0][0])
@@ -334,24 +369,6 @@ def latex_text(formula, name_file, position=None, dpi=150):
     formula = pygame.image.load(obj)
     screen.blit(formula, convert_coords(position, 1))
 
-
-def differential(func, init_c, t_max, color=(255, 255, 0), dt=0.01):
-    point_list = []
-
-    time = 0
-    new_c = init_c
-    while time <= t_max:
-        ds = func(new_c)
-        if len(point_list) == 0:
-            point_list.append(convert_coords(new_c[:2], 1))
-
-        for i in range(0, 3):
-            new_c[i] += ds[i]
-        point_list.append(convert_coords(new_c[:2], 1))
-        time += dt
-
-    pygame.draw.circle(screen, color, [round(axie) for axie in convert_coords(new_c[:2], 1)], 4)
-    pygame.draw.lines(screen, color, False, point_list, 3)
 
 def parametric_functions(func, t_min, t_max, color=(255, 255, 0), dt=0.01):
     point_list = []
