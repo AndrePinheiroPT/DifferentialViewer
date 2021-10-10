@@ -27,16 +27,27 @@ def lorenz_attractor(coords):
     dz = (coords[0] * coords[1] - 8/3 * coords[2])
     return [dx, dy, dz]
 
-def slide1():
-    global time
-    tools3D = Scense3D(30, 2, 2)
-    tools3D.three_dimensional_space(10)
+def helicoide(l):
+    return [cos(l), sin(l), l]
 
-    tools3D.line([0, 0, 0], [0, 1, 0], 0, 2, (0, 0, 255), 3)
-    tools3D.line([0, 2, 0], [1, 0, 0], 0, 2, (255, 0, 0), 3)
-    tools3D.line([2, 2, 0], [1, 1, 3], -6, 6, (111, 111, 111))
-    tools3D.vector([1, 1, 3], (0, 255, 0), (2, 2, 0))
-    tools3D.function(gauss_curve, [-6, 6, -6, 6])
+def sphere(u, v):
+    return [5 + 2*cos(u)*sin(v), 2*sin(u)*sin(v), 2*cos(v)]
+
+def vector_f(x, y, z):
+    return [
+        x / (0.01 if (x**2 + y**2 + z**2) == 0 else (x**2 + y**2 + z**2)),
+        y / (0.01 if (x**2 + y**2 + z**2) == 0 else (x**2 + y**2 + z**2)),
+        z / (0.01 if (x**2 + y**2 + z**2) == 0 else (x**2 + y**2 + z**2))
+    ]
+
+tools3D = Scense3D(13, 2, 2)
+def slide1():
+    global time, tools3D
+    
+    tools3D.three_dimensional_space(10)
+    tools3D.vector_field(vector_f, [-6, 6, -6, 6, -6, 6], 3, branch_length=0.03)
+    tools3D.parametric_line(helicoide, -10, 10, (0, 0, 255))
+    tools3D.parametric_surface(sphere, [-pi, pi, -pi, pi])
     tools3D.differential(lorenz_attractor, [1, 1.4, 4], time)
     time += 0.01
 

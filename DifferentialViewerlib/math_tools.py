@@ -119,15 +119,17 @@ def cartesian_plane():
     pygame.draw.line(screen, WHITE, (convert_coords((0, 0), 1)[0], 0), (convert_coords((0, 0), 1)[0], CONFIG['screen_height']), 1)
     pygame.draw.line(screen, WHITE, (0, convert_coords((0, 0), 1)[1]), (CONFIG['screen_width'], convert_coords((0, 0), 1)[1]), 1)
 
-can_change = False
-prev_state = None
 class Scense3D:
     def __init__(self, r, theta, phi):
         self.r = r
         self.theta = theta
         self.phi = phi 
+        self.can_change = False
+        self.prev_state = None
+        self.dxy = [0, 0]
 
     def coord3d2d(self, point):
+        self.check_mouse()
         matrix = (
             ((1/self.r)*cos(self.phi), -(1/self.r)*sin(self.phi), 0),
             ((1/self.r)*sin(self.phi)*cos(self.theta), (1/self.r)*cos(self.phi)*cos(self.theta), (1/self.r)*sin(self.theta)),
@@ -154,51 +156,73 @@ class Scense3D:
             ]
 
     def check_mouse(self):
-        global can_change, prev_state
         mouse_state = self.convert(pygame.mouse.get_pos(), 0)
-
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONDOWN:
-                prev_state = mouse_state
-                can_change = True
+                self.prev_state = mouse_state
+                self.can_change = True
             if event.type == pygame.MOUSEBUTTONUP:
-                can_change = False
+                self.can_change = False
+                self.dxy = [self.theta, self.phi]
 
-        if can_change:
-            self.theta = mouse_state[1] - prev_state[1]
-            self.phi = mouse_state[0] - prev_state[0]
+        if self.can_change:
+            self.theta = self.dxy[0] + mouse_state[1] - self.prev_state[1]
+            self.phi = self.dxy[1] + mouse_state[0] - self.prev_state[0]
 
-    def vector(self, vect, color, origin=[0, 0, 0], stroke=3):
+    def vector(self, vect, color, origin=[0, 0, 0], stroke=3, branch_length=0.03):
         dx = self.coord3d2d(vect)[0]
         dy = self.coord3d2d(vect)[1]
 
         vector_length = 0.001 if sqrt(dx**2 + dy**2) == 0 else sqrt(dx**2 + dy**2)
 
-        branch1 = (0.025*(dy/vector_length - dx/vector_length), -0.025*(dx/vector_length + dy/vector_length)) 
-        branch2 = (-0.025*(dy/vector_length + dx/vector_length), 0.025*(dx/vector_length - dy/vector_length))
+        branch1 = (branch_length*(dy/vector_length - dx/vector_length), -branch_length*(dx/vector_length + dy/vector_length)) 
+        branch2 = (-branch_length*(dy/vector_length + dx/vector_length), branch_length*(dx/vector_length - dy/vector_length))
 
-        origin_point = [0, 0]
-        origin_point[0] = self.coord3d2d(origin)[0]
-        origin_point[1] = self.coord3d2d(origin)[1]
+        origin_point = [self.coord3d2d(origin)[0], self.coord3d2d(origin)[1]]
 
         x_component = origin_point[0] + dx
         y_component = origin_point[1] + dy
-
+        triangle = [self.convert((x_component, y_component), 1), self.convert((x_component + branch1[0], y_component + branch1[1]), 1), self.convert((x_component + branch2[0], y_component + branch2[1]), 1)]
         pygame.draw.line(screen, color, self.convert((origin_point[0], origin_point[1]), 1), self.convert((x_component, y_component), 1), stroke)
-        pygame.draw.line(screen, color, self.convert((x_component, y_component), 1), self.convert((x_component + branch1[0], y_component + branch1[1]), 1), stroke)
-        pygame.draw.line(screen, color, self.convert((x_component, y_component), 1), self.convert((x_component + branch2[0], y_component + branch2[1]), 1), stroke)
+        pygame.gfxdraw.filled_polygon(screen, triangle, color)
+
+    def vector_field(self, vect_func, xyz_limits, dist, color=(0, 255, 0), branch_length=0.01):
+        for x in range(xyz_limits[0], xyz_limits[1] + 1, dist):
+            for y in range(xyz_limits[2], xyz_limits[3] + 1, dist):
+                for z in range(xyz_limits[4], xyz_limits[5] + 1, dist):
+                    self.vector(vect_func(x, y, z), color, (x, y, z), 2, branch_length=branch_length)
 
     def three_dimensional_space(self, scale=6):
-        self.check_mouse()
         self.vector([2*scale, 0, 0], (255, 255, 255), [-scale, 0, 0], 2)
         self.vector([0, 2*scale, 0], (255, 255, 255), [0, -scale, 0], 2)
         self.vector([0, 0, 2*scale], (255, 255, 255), [0, 0, -scale], 2)
 
-    def line(self, point, v_direct, l_min, l_max, color, stroke=1):
-        dx = self.coord3d2d(v_direct)[0]
-        dy = self.coord3d2d(v_direct)[1]
+    def parametric_line(self, func, l_min, l_max, color=(255, 255, 0), dl=0.1, stroke=1):
+        l = l_min
+        line_points = []
+        while l <= l_max:
+            line_points.append(self.convert(self.coord3d2d(func(l)), 1))
+            l += dl
 
-        pygame.draw.line(screen, color, self.convert((l_min*dx + self.coord3d2d(point)[0], l_min*dy + self.coord3d2d(point)[1]), 1), self.convert((l_max*dx + self.coord3d2d(point)[0], l_max*dy + self.coord3d2d(point)[1]), 1), stroke)
+        pygame.draw.lines(screen, color, False, line_points, 3)
+
+    def parametric_surface(self, func, uv_limits, color=(0, 0, 200, 100), du=0.6, dv=0.6):
+        polygons = []
+        x = uv_limits[0]
+        while x < uv_limits[1]:
+            y = uv_limits[2]
+            while y < uv_limits[3]:
+                ds = []
+                for i in range(0, 2):
+                    for j in range(0 + 1*i, 2 - 3*i, 1 -2*i):
+                        ds.append(self.convert(self.coord3d2d(func(x + i*du, y + j*dv)) , 1))
+                
+                polygons.append(ds)
+                y += dv
+            x += du
+         
+        for ds in polygons:
+            pygame.gfxdraw.filled_polygon(screen, ds, color)
 
     def function(self, func, xy_limits, color=(0, 0, 200, 100), dx=0.6, dy=0.6):
         polygons = []
@@ -254,10 +278,7 @@ def linear_transformation(matrix):
         convert_coords((-alpha*matrix[0][0] + n*matrix[0][1], -alpha*matrix[1][0] + n*matrix[1][1]), 1), 
         convert_coords((alpha*matrix[0][0] + n*matrix[0][1], alpha*matrix[1][0] + n*matrix[1][1]), 1))
         n += 1
-        
-
-    
-
+  
 
 def real_functions(function, xd_min, xd_max, dx=0.01, color=(255, 255, 0)):
     x = xd_min
@@ -287,31 +308,6 @@ def complex_functions(func, domain_func, t_min, t_max, dt=0.01, color=(255, 255,
 
     if len(complex_function_points) >= 2:
         pygame.draw.lines(screen, color, False, complex_function_points, 2)
-
-
-def vector_field(func, space, scalar, color=(0, 255, 0)):
-
-    for x in range(-CONFIG['x_max'], CONFIG['x_max']+ 1, space):
-        for y in range(-CONFIG['y_max'], CONFIG['y_max']+ 1, space):
-            vector_length = 0.001 if sqrt(func(x, y)[0]**2 + func(x, y)[1]**2) == 0 else sqrt(func(x, y)[0]**2 + func(x, y)[1]**2)
-
-            v_stick1 = (
-                0.15*(func(x, y)[1]/vector_length - func(x, y)[0]/vector_length),
-                -0.15*(func(x, y)[0]/vector_length + func(x, y)[1]/vector_length)
-            ) 
-
-            v_stick2 = (
-                -0.15*(func(x, y)[1]/vector_length + func(x, y)[0]/vector_length),
-                0.15*(func(x, y)[0]/vector_length - func(x, y)[1]/vector_length)
-            )
-
-            output_fx = x + func(x, y)[0] * scalar
-            output_fy = y + func(x, y)[1] * scalar
-
-            pygame.draw.line(screen, color, convert_coords((x, y), 1), convert_coords((output_fx, output_fy), 1), 2)
-            pygame.draw.line(screen, color, convert_coords((output_fx, output_fy), 1), convert_coords((output_fx + v_stick1[0], output_fy + v_stick1[1]), 1), 2)
-            pygame.draw.line(screen, color, convert_coords((output_fx, output_fy), 1), convert_coords((output_fx + v_stick2[0], output_fy + v_stick2[1]), 1), 2)
-
 
 def derivative_line(func, x, range_line, h=0.0001, color=(230, 0, 85)):
     derivative = 0
