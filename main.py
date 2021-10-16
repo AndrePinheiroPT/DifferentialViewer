@@ -40,18 +40,76 @@ def vector_f(x, y, z):
         z / (0.01 if (x**2 + y**2 + z**2) == 0 else (x**2 + y**2 + z**2))
     ]
 
-tools3D = Scense3D(13, 2, 2)
+
+tools3D = Scense3D(13, 2, 1, viewer)
 def slide1():
-    global time, tools3D
-    
+    tools3D.phi += 0.006
     tools3D.three_dimensional_space(10)
-    tools3D.vector_field(vector_f, [-6, 6, -6, 6, -6, 6], 3, branch_length=0.03)
-    tools3D.parametric_line(helicoide, -10, 10, (0, 0, 255))
-    tools3D.parametric_surface(sphere, [-pi, pi, -pi, pi])
+    tools3D.parametric_line(helicoide, -10, -0.2*(viewer.time-10)**2 + 10.1 if viewer.time < 10 else 10, (0, 0, 255))
+    #tools3D.parametric_surface(sphere, [-pi, pi, -pi, pi])
+
+def slide2():
+    tools3D.phi += 0.006
+    tools3D.three_dimensional_space(10)
+    if viewer.time < 10:
+        tools3D.parametric_line(helicoide, -10, -0.2*(viewer.time)**2 + 10.1 if viewer.time < 10 else -10, (0, 0, 255))
+
+def func(t):
+    return [t, 0, 0.21*t**3 - 1.22*t**2 - 0.4*t + 8]
+def slide3():
+    tools3D.phi += 0.006
+    tools3D.three_dimensional_space(10)
+    tools3D.parametric_line(func, 0, 5)
+
+def func_surface(u, v):
+    return [u, sin(v)*(0.21*u**3 - 1.22*u**2 - 0.4*u + 8), (0.21*u**3 - 1.22*u**2 - 0.4*u + 8)*cos(v)]
+def slide4():
+    tools3D.phi += 0.006
+    tools3D.three_dimensional_space(10)
+    tools3D.parametric_line(func, 0, 5)
+    tools3D.parametric_surface(func_surface, [0, 5, 0, -0.5/pi*(viewer.time - 2*pi)**2 + 2*pi if viewer.time < 2*pi else 2*pi], dv=0.3, du=0.3)
+def slide5():
+    tools3D.phi += 0.006
+    tools3D.three_dimensional_space(10)
+    tools3D.parametric_surface(func_surface, [0, 5, 0, -0.5/pi*(viewer.time)**2 + 2*pi if viewer.time < 2*pi else 0], dv=0.3, du=0.3)
+
+
+def cossin(x, y):
+    return sin(x)*cos(y) + 4
+
+def cossin_gradient(x, y, z): 
+    return [cos(x), -sin(y), 0]
+
+def slide6():
+    tools3D.phi += 0.006
+    tools3D.three_dimensional_space(10)  
+    tools3D.function(cossin, [-10, -0.2*(viewer.time-10)**2 + 10.1 if viewer.time < 10 else 10, -10, 10])
+    viewer.time += 0.6
+
+def slide7():
+    tools3D.phi += 0.006
+    tools3D.three_dimensional_space(10)  
+    tools3D.function(cossin, [-10, 10, -10, 10])
+    tools3D.vector_field(cossin_gradient, [-10, -0.2*(viewer.time-10)**2 + 10.1 if viewer.time < 10 else 10, -10, 10, 0, 0], 1)
+    viewer.time += 0.6
+
+def slide8():
+    tools3D.phi += 0.006
+    tools3D.three_dimensional_space(10)  
+    if viewer.time < 10:
+        tools3D.function(cossin, [-10, -0.2*(viewer.time)**2 + 10.1 if viewer.time < 10 else -10, -10, 10])
+        tools3D.vector_field(cossin_gradient, [-10,  -0.2*(viewer.time)**2 + 10.1 if viewer.time < 10 else -10, -10, 10, 0, 0], 1)
+    viewer.time += 0.6
+
+time=0
+def slide9():
+    global time
+    tools3D.phi += 0.006
+    tools3D.r=30
+    tools3D.three_dimensional_space(10)  
     tools3D.differential(lorenz_attractor, [1, 1.4, 4], time)
-    time += 0.01
+    time+=0.01
 
-
-viewer.set_slides([slide1])
+viewer.set_slides([slide1, slide2, slide3, slide4, slide5, slide6, slide7, slide8, slide9])
 viewer.init()
 

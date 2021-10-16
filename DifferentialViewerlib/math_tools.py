@@ -31,6 +31,7 @@ font = None
 
 class Viewer():
     def __init__(self, config):
+        self.mouse_pressed = False
         self.slide_index = 0
         self.slides = []
         self.mouse_state = []
@@ -73,11 +74,17 @@ class Viewer():
                     if event.key == pygame.K_LEFT:
                         if self.slide_index >= 1:
                             self.slide_index -= 1
+                            self.time = 0
                     if event.key == pygame.K_RIGHT:
                         if self.slide_index < len(self.slides) - 1:
                             self.slide_index += 1
+                            self.time = 0
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    self.mouse_pressed = True
+                if event.type == pygame.MOUSEBUTTONUP:
+                    self.mouse_pressed = False
 
-            self.time += 0.01
+            self.time += 0.1
             pygame.display.update()
 
 def convert_coords(coords, standard):
@@ -120,12 +127,13 @@ def cartesian_plane():
     pygame.draw.line(screen, WHITE, (0, convert_coords((0, 0), 1)[1]), (CONFIG['screen_width'], convert_coords((0, 0), 1)[1]), 1)
 
 class Scense3D:
-    def __init__(self, r, theta, phi):
+    def __init__(self, r, theta, phi, viewer):
         self.r = r
         self.theta = theta
         self.phi = phi 
         self.can_change = False
         self.prev_state = None
+        self.viewer = viewer
         self.dxy = [0, 0]
 
     def coord3d2d(self, point):
@@ -157,18 +165,17 @@ class Scense3D:
 
     def check_mouse(self):
         mouse_state = self.convert(pygame.mouse.get_pos(), 0)
-        for event in pygame.event.get():
-            if event.type == pygame.MOUSEBUTTONDOWN:
+        if self.viewer.mouse_pressed:
+            if not self.can_change:
                 self.prev_state = mouse_state
-                self.can_change = True
-            if event.type == pygame.MOUSEBUTTONUP:
-                self.can_change = False
-                self.dxy = [self.theta, self.phi]
-
-        if self.can_change:
             self.theta = self.dxy[0] + mouse_state[1] - self.prev_state[1]
             self.phi = self.dxy[1] + mouse_state[0] - self.prev_state[0]
-
+            self.can_change = True
+        else:
+            if self.can_change:
+                self.dxy = [self.theta, self.phi]
+            self.can_change = False
+            
     def vector(self, vect, color, origin=[0, 0, 0], stroke=3, branch_length=0.03):
         dx = self.coord3d2d(vect)[0]
         dy = self.coord3d2d(vect)[1]
@@ -187,10 +194,16 @@ class Scense3D:
         pygame.gfxdraw.filled_polygon(screen, triangle, color)
 
     def vector_field(self, vect_func, xyz_limits, dist, color=(0, 255, 0), branch_length=0.01):
-        for x in range(xyz_limits[0], xyz_limits[1] + 1, dist):
-            for y in range(xyz_limits[2], xyz_limits[3] + 1, dist):
-                for z in range(xyz_limits[4], xyz_limits[5] + 1, dist):
+        x = xyz_limits[0]
+        while x <= xyz_limits[1]:
+            y = xyz_limits[2]
+            while y <= xyz_limits[3]:
+                z = xyz_limits[4]
+                while z <= xyz_limits[5]:
                     self.vector(vect_func(x, y, z), color, (x, y, z), 2, branch_length=branch_length)
+                    z += dist
+                y += dist
+            x += dist
 
     def three_dimensional_space(self, scale=6):
         self.vector([2*scale, 0, 0], (255, 255, 255), [-scale, 0, 0], 2)
