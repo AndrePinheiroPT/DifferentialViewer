@@ -87,6 +87,8 @@ class Viewer():
             self.time += 0.1
             pygame.display.update()
 
+origin_coords = [310, 105]
+unit_length = 80
 def convert_coords(coords, standard):
     if standard:
         return [
@@ -101,31 +103,28 @@ def convert_coords(coords, standard):
 
 
 def cartesian_plane():
-    x_value = round(CONFIG['x_min'])
-    y_value = round(CONFIG['y_min'])
-
-    unit_lenght_x = round(convert_coords((0, 0), 1)[0] - convert_coords((-CONFIG['x_length'], 0), 1)[0])
-    unit_lenght_y = convert_coords((0, 0), 1)[1] - convert_coords((0, CONFIG['y_length']), 1)[1]
-
-    for x in range(round(convert_coords((round(CONFIG['x_min']), 0),1)[0]), CONFIG['screen_width'], unit_lenght_x):
+    x = origin_coords[0]
+    while x <= CONFIG['screen_width']:
         pygame.draw.line(screen, CYAN, (x, 0), (x, CONFIG['screen_height']), 1)
-        screen.blit(font.render(f'{x_value:.1f}', False, WHITE), (x+2, convert_coords((0, 0), 1)[1]))
-        x_value += CONFIG['x_length']
-        
-    y = round(convert_coords((0, round(CONFIG['y_min'])), 1)[1])
+        x += unit_length
+    x = origin_coords[0]
+    while x >= 0:
+        pygame.draw.line(screen, CYAN, (x, 0), (x, CONFIG['screen_height']), 1)
+        x -= unit_length
+    y = origin_coords[1]
+    while y <= CONFIG['screen_height']:
+        pygame.draw.line(screen, CYAN, (0, y), (CONFIG['screen_width'], y), 1)
+        y += unit_length
+    y = origin_coords[1]
     while y >= 0:
         pygame.draw.line(screen, CYAN, (0, y), (CONFIG['screen_width'], y), 1)
-        if y_value != 0:
-            screen.blit(font.render(f'{y_value:.1f}', False, WHITE), (convert_coords((0, 0), 1)[0]+3, y-12))
-        y_value += CONFIG['y_length']
-        y -= unit_lenght_y
+        y -= unit_length
+    
+    pygame.draw.line(screen, WHITE, (origin_coords[0], 0), (origin_coords[0], CONFIG['screen_height']), 1)
+    pygame.draw.line(screen, WHITE, (0, origin_coords[1]), (CONFIG['screen_width'], origin_coords[1]), 1)
 
-    screen.blit(font.render(f'{CONFIG["x_label"]}', False, WHITE), (CONFIG['screen_width'] - 10, convert_coords((0, 0), 1)[1]))
-    screen.blit(font.render(f'{CONFIG["y_label"]}', False, WHITE), (convert_coords((0, 0), 1)[0] + 5 , 0))
 
-    pygame.draw.line(screen, WHITE, (convert_coords((0, 0), 1)[0], 0), (convert_coords((0, 0), 1)[0], CONFIG['screen_height']), 1)
-    pygame.draw.line(screen, WHITE, (0, convert_coords((0, 0), 1)[1]), (CONFIG['screen_width'], convert_coords((0, 0), 1)[1]), 1)
-
+    
 class Scense3D:
     def __init__(self, r, theta, phi, viewer):
         self.r = r

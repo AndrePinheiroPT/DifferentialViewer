@@ -110,6 +110,9 @@ def slide9():
     tools3D.differential(lorenz_attractor, [1, 1.4, 4], time)
     time+=0.01
 
-viewer.set_slides([slide1, slide2, slide3, slide4, slide5, slide6, slide7, slide8, slide9])
+def test():
+    cartesian_plane()
+
+viewer.set_slides([test])
 viewer.init()
 
