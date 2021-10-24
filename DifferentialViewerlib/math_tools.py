@@ -11,15 +11,7 @@ import shutil
 
 CONFIG = {
     'screen_width': 900,
-    'screen_height': 600,
-    'x_max': 8,
-    'y_length': 1,
-    'y_max': 3,
-    'x_min': -1,
-    'y_min': -1,
-    'y_length': 1,
-    'x_label': 'Re',
-    'y_label': 'Im'
+    'screen_height': 600
 }
 
 CYAN = (55, 55, 55)
@@ -63,7 +55,7 @@ class Viewer():
         while True:
             clock.tick(100)
             screen.fill((0, 0, 0))
-            self.mouse_state = convert_coords(pygame.mouse.get_pos(), 0)
+            self.mouse_state = pygame.mouse.get_pos()
             
             self.slides[self.slide_index]()
             
@@ -89,42 +81,162 @@ class Viewer():
 
 origin_coords = [310, 105]
 unit_length = 80
-def convert_coords(coords, standard):
-    if standard:
-        return [
-            CONFIG['screen_width']/(CONFIG['x_max'] - CONFIG['x_min']) * (coords[0] - CONFIG['x_min']),
-            CONFIG['screen_height']/(CONFIG['y_max'] - CONFIG['y_min']) * (CONFIG['y_max'] - coords[1])
-        ]
-    else:
-        return [
-            coords[0] * (CONFIG['x_max'] - CONFIG['x_min']) / CONFIG['screen_width'] + CONFIG['x_min'],
-            -coords[1] * (CONFIG['y_max'] - CONFIG['y_min']) / CONFIG['screen_height'] + CONFIG['y_max']
-        ]
 
+class GraficScene:
+    def __init__(self, origin_coords, unit_x, unit_y, viewer):
+        self.origin_coords = origin_coords
+        self.unit_x = unit_x
+        self.unit_y = unit_y
+        self.can_change = False
+        self.prev_state = None
+        self.dxy = self.origin_coords
+        self.viewer = viewer
 
-def cartesian_plane():
-    x = origin_coords[0]
-    while x <= CONFIG['screen_width']:
-        pygame.draw.line(screen, CYAN, (x, 0), (x, CONFIG['screen_height']), 1)
-        x += unit_length
-    x = origin_coords[0]
-    while x >= 0:
-        pygame.draw.line(screen, CYAN, (x, 0), (x, CONFIG['screen_height']), 1)
-        x -= unit_length
-    y = origin_coords[1]
-    while y <= CONFIG['screen_height']:
-        pygame.draw.line(screen, CYAN, (0, y), (CONFIG['screen_width'], y), 1)
-        y += unit_length
-    y = origin_coords[1]
-    while y >= 0:
-        pygame.draw.line(screen, CYAN, (0, y), (CONFIG['screen_width'], y), 1)
-        y -= unit_length
+    def check_mouse(self):
+        mouse_state = self.convert_coords(pygame.mouse.get_pos(), 0)
+        
+        if self.viewer.mouse_pressed:
+            if self.prev_state == None:
+                self.prev_state = mouse_state
+            self.origin_coords[1] -= mouse_state[1]*3 - self.prev_state[1]
+            self.origin_coords[0] += mouse_state[0]*3 - self.prev_state[0]
+            self.prev_state = mouse_state
+
+    def convert_coords(self, coords, standard):
+        if standard:
+            return [coords[0]*self.unit_x + self.origin_coords[0], -coords[1]*self.unit_x + self.origin_coords[1]]
+        else:
+            return [(coords[0] - self.origin_coords[0])/self.unit_y,-(coords[1] - self.origin_coords[1])/self.unit_y]
+
+    def cartesian_plane(self):
+        x = self.origin_coords[0]
+        while x <= CONFIG['screen_width']:
+            pygame.draw.line(screen, CYAN, (x, 0), (x, CONFIG['screen_height']), 1)
+            x += unit_length
+        x = self.origin_coords[0]
+        while x >= 0:
+            pygame.draw.line(screen, CYAN, (x, 0), (x, CONFIG['screen_height']), 1)
+            x -= unit_length
+        y = self.origin_coords[1]
+        while y <= CONFIG['screen_height']:
+            pygame.draw.line(screen, CYAN, (0, y), (CONFIG['screen_width'], y), 1)
+            y += unit_length
+        y = self.origin_coords[1]
+        while y >= 0:
+            pygame.draw.line(screen, CYAN, (0, y), (CONFIG['screen_width'], y), 1)
+            y -= unit_length
+        
+        pygame.draw.line(screen, WHITE, (self.origin_coords[0], 0), (self.origin_coords[0], CONFIG['screen_height']), 1)
+        pygame.draw.line(screen, WHITE, (0, self.origin_coords[1]), (CONFIG['screen_width'], self.origin_coords[1]), 1)
+
+    def linear_transformation(self, matrix):
+        alpha = CONFIG['screen_width']/(0.001 if matrix[0][0] == 0 else matrix[0][0])
+        beta = CONFIG['screen_height']/(0.001 if matrix[1][1] == 0 else matrix[1][1])
+
+        n = -10
+        while n <= 10:
+            pygame.draw.line(screen, YELLOW, 
+            self.convert_coords((-beta*matrix[0][1] + n*matrix[0][0], -beta*matrix[1][1] + n*matrix[1][0]), 1), 
+            self.convert_coords((beta*matrix[0][1] + n*matrix[0][0], beta*matrix[1][1] + n*matrix[1][0]), 1))
+            n += 1
+
+        n = -10
+        while n <= 10:
+            pygame.draw.line(screen, YELLOW, 
+            self.convert_coords((-alpha*matrix[0][0] + n*matrix[0][1], -alpha*matrix[1][0] + n*matrix[1][1]), 1), 
+            self.convert_coords((alpha*matrix[0][0] + n*matrix[0][1], alpha*matrix[1][0] + n*matrix[1][1]), 1))
+            n += 1
     
-    pygame.draw.line(screen, WHITE, (origin_coords[0], 0), (origin_coords[0], CONFIG['screen_height']), 1)
-    pygame.draw.line(screen, WHITE, (0, origin_coords[1]), (CONFIG['screen_width'], origin_coords[1]), 1)
+    def real_functions(self, function, xd_min, xd_max, dx=0.01, color=(255, 255, 0)):
+        x = xd_min
+        function_points = []
+        while xd_min <= x <= xd_max:
+            x += dx
+            y = function(x)
 
+            function_points.append(self.convert_coords((x, y), 1))
 
+        if len(function_points) >= 2:
+            pygame.draw.lines(screen, color, False, function_points, 3)
+
+    def complex_functions(self, func, domain_func, t_min, t_max, dt=0.01, color=(255, 255, 0)):
+
+        complex_function_points = []
+        t = t_min 
+        while t_min <= t <= t_max:
+            t += dt
+
+            z = []
+            for i in range(0, 2):
+                z.append(func(*domain_func(t))[i])
+
+            complex_function_points.append(self.convert_coords((z[0], z[1]), 1))
+
+        if len(complex_function_points) >= 2:
+            pygame.draw.lines(screen, color, False, complex_function_points, 2)
     
+    def derivative_line(self, func, x, range_line, h=0.0001, color=(230, 0, 85)):
+        derivative = 0
+
+        derivative = (func(x+h) - func(x)) / h  # slope
+        b = func(x) - derivative*x
+
+        x_range = range_line/(1+derivative**2)**0.5
+        pygame.draw.line(screen, color, 
+        self.convert_coords((x - x_range, (x - x_range)*derivative + b), 1), 
+        self.convert_coords((x + x_range, (x + x_range)*derivative + b), 1), 3)
+            
+        return derivative
+
+    def riemann_rectangles(self, func, x_min, x_max, n, color_init=[131, 47, 0, 200], color_end=[231, 242, 0, 200]):
+        reason_x = (self.convert_coords((CONFIG['x_max'], CONFIG['y_max']), 1)[0] - self.convert_coords((0, 0), 1)[0]) / CONFIG['x_max']
+        reason_y = (self.convert_coords((CONFIG['x_max'], CONFIG['y_max']), 1)[1] - self.convert_coords((0, 0), 1)[1]) / CONFIG['y_max']
+
+        color = [0, 0, 0, 0]
+        d_color = [0, 0, 0, 0]
+        for k in range(0, 4):
+            d_color[k] = (color_end[k] - color_init[k]) / n
+
+        dx = (x_max - x_min) / n
+        total_sum = 0
+        for i in range(0, n):
+            for k in range(0, 4):
+                color[k] = color_init[k] + d_color[k]*i
+
+            x = x_min + i*dx
+            dy = func(x)
+
+            total_sum += dy*dx
+
+            pygame.gfxdraw.box(screen, pygame.Rect(self.convert_coords((x, func(x)), 1), (dx * reason_x, -dy * reason_y + 1)), color)
+
+        return total_sum
+
+    def limit_aproximation(self, func, h, delta, r=True, color=(255, 255, 0)):
+        self.real_functions(func, h - delta, h + delta)
+        standard_limit = self.convert_coords((h, func(h)), 1)
+        for i in range(0, 2):
+            standard_limit[i] = round(standard_limit[i])
+        pygame.draw.circle(screen, color, standard_limit, 4)
+
+        return func(h + delta if r else h - delta)
+
+    def latex_text(self, formula, name_file, position=None, dpi=150):
+        obj = BytesIO()
+        preview(rf'$${formula}$$', filename='{}.png'.format(name_file), euler=False, outputbuffer=obj, viewer='BytesIO', dvioptions=["-T", "tight", "-z", "0", "--truecolor", f"-D {dpi}", "-bg", "Transparent", "-fg", "White"])
+        obj.seek(0)
+        formula = pygame.image.load(obj)
+        screen.blit(formula, self.convert_coords(position, 1))
+
+    def parametric_functions(self, func, t_min, t_max, color=(255, 255, 0), dt=0.01):
+        point_list = []
+        t = t_min
+        while t <= t_max:
+            point_list.append(self.convert_coords(func(t), 1))
+            t += dt
+            
+        pygame.draw.lines(screen, color, False, point_list, 3)
+
 class Scense3D:
     def __init__(self, r, theta, phi, viewer):
         self.r = r
@@ -272,121 +384,7 @@ class Scense3D:
 
         pygame.draw.circle(screen, color, [round(axie) for axie in self.convert(self.coord3d2d(new_c), 1)], 4)
         pygame.draw.lines(screen, color, False, point_list, 3)
-
-def linear_transformation(matrix):
-    alpha = CONFIG['screen_width']/(0.001 if matrix[0][0] == 0 else matrix[0][0])
-    beta = CONFIG['screen_height']/(0.001 if matrix[1][1] == 0 else matrix[1][1])
-
-    n = -10
-    while n <= 10:
-        pygame.draw.line(screen, YELLOW, 
-        convert_coords((-beta*matrix[0][1] + n*matrix[0][0], -beta*matrix[1][1] + n*matrix[1][0]), 1), 
-        convert_coords((beta*matrix[0][1] + n*matrix[0][0], beta*matrix[1][1] + n*matrix[1][0]), 1))
-        n += 1
-
-    n = -10
-    while n <= 10:
-        pygame.draw.line(screen, YELLOW, 
-        convert_coords((-alpha*matrix[0][0] + n*matrix[0][1], -alpha*matrix[1][0] + n*matrix[1][1]), 1), 
-        convert_coords((alpha*matrix[0][0] + n*matrix[0][1], alpha*matrix[1][0] + n*matrix[1][1]), 1))
-        n += 1
   
-
-def real_functions(function, xd_min, xd_max, dx=0.01, color=(255, 255, 0)):
-    x = xd_min
-    function_points = []
-    while xd_min <= x <= xd_max:
-        x += dx
-        y = function(x)
-
-        function_points.append(convert_coords((x, y), 1))
-
-    if len(function_points) >= 2:
-        pygame.draw.lines(screen, color, False, function_points, 3)
-
-
-def complex_functions(func, domain_func, t_min, t_max, dt=0.01, color=(255, 255, 0)):
-
-    complex_function_points = []
-    t = t_min 
-    while t_min <= t <= t_max:
-        t += dt
-
-        z = []
-        for i in range(0, 2):
-            z.append(func(*domain_func(t))[i])
-
-        function_points.append(convert_coords((z[0], z[1]), 1))
-
-    if len(complex_function_points) >= 2:
-        pygame.draw.lines(screen, color, False, complex_function_points, 2)
-
-def derivative_line(func, x, range_line, h=0.0001, color=(230, 0, 85)):
-    derivative = 0
-
-    derivative = (func(x+h) - func(x)) / h  # slope
-    b = func(x) - derivative*x
-
-    x_range = range_line/(1+derivative**2)**0.5
-    pygame.draw.line(screen, color, 
-    convert_coords((x - x_range, (x - x_range)*derivative + b), 1), 
-    convert_coords((x + x_range, (x + x_range)*derivative + b), 1), 3)
-        
-    return derivative
-
-
-def riemann_rectangles(func, x_min, x_max, n, color_init=[131, 47, 0, 200], color_end=[231, 242, 0, 200]):
-    reason_x = (convert_coords((CONFIG['x_max'], CONFIG['y_max']), 1)[0] - convert_coords((0, 0), 1)[0]) / CONFIG['x_max']
-    reason_y = (convert_coords((CONFIG['x_max'], CONFIG['y_max']), 1)[1] - convert_coords((0, 0), 1)[1]) / CONFIG['y_max']
-
-    color = [0, 0, 0, 0]
-    d_color = [0, 0, 0, 0]
-    for k in range(0, 4):
-        d_color[k] = (color_end[k] - color_init[k]) / n
-
-    dx = (x_max - x_min) / n
-    total_sum = 0
-    for i in range(0, n):
-        for k in range(0, 4):
-            color[k] = color_init[k] + d_color[k]*i
-
-        x = x_min + i*dx
-        dy = func(x)
-
-        total_sum += dy*dx
-
-        pygame.gfxdraw.box(screen, pygame.Rect(convert_coords((x, func(x)), 1), (dx * reason_x, -dy * reason_y + 1)), color)
-
-    return total_sum
-
-
-def limit_aproximation(func, h, delta, r=True, color=(255, 255, 0)):
-    real_functions(func, h - delta, h + delta)
-    standard_limit = convert_coords((h, func(h)), 1)
-    for i in range(0, 2):
-        standard_limit[i] = round(standard_limit[i])
-    pygame.draw.circle(screen, color, standard_limit, 4)
-
-    return func(h + delta if r else h - delta)
-
-
-def latex_text(formula, name_file, position=None, dpi=150):
-    obj = BytesIO()
-    preview(rf'$${formula}$$', filename='{}.png'.format(name_file), euler=False, outputbuffer=obj, viewer='BytesIO', dvioptions=["-T", "tight", "-z", "0", "--truecolor", f"-D {dpi}", "-bg", "Transparent", "-fg", "White"])
-    obj.seek(0)
-    formula = pygame.image.load(obj)
-    screen.blit(formula, convert_coords(position, 1))
-
-
-def parametric_functions(func, t_min, t_max, color=(255, 255, 0), dt=0.01):
-    point_list = []
-    t = t_min
-    while t <= t_max:
-        point_list.append(convert_coords(func(t), 1))
-        t += dt
-        
-    pygame.draw.lines(screen, color, False, point_list, 3)
-
 def complex_conjectures(a, b, sum_length):
     global points
     for n in range(1, sum_length+1):
