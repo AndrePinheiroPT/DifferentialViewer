@@ -110,7 +110,7 @@ def slide9():
     tools3D.differential(lorenz_attractor, [1, 1.4, 4], time)
     time+=0.01
 
-grafic = GraficScene([40, 40], 80, 80, viewer)
+grafic = GraficScene(viewer, [40, 40], 80, 80)
 def test():
     grafic.check_mouse()
     grafic.cartesian_plane()

@@ -49,7 +49,7 @@ class Viewer():
         pygame.display.set_caption('DifferentialViewer')
         pygame.Surface((CONFIG['screen_width'], CONFIG['screen_height']))
         pygame.font.init()
-        font = pygame.font.SysFont('Arial', 12)
+        font = pygame.font.SysFont('Arial', 15)
         clock = pygame.time.Clock()
         
         while True:
@@ -79,17 +79,14 @@ class Viewer():
             self.time += 0.1
             pygame.display.update()
 
-origin_coords = [310, 105]
-unit_length = 80
-
 class GraficScene:
-    def __init__(self, origin_coords, unit_x, unit_y, viewer):
+    def __init__(self, viewer, origin_coords, unit_x, unit_y, x_label='X', y_label='Y'):
         self.origin_coords = origin_coords
         self.unit_x = unit_x
         self.unit_y = unit_y
-        self.can_change = False
+        self.x_label = x_label
+        self.y_label = y_label
         self.prev_state = None
-        self.dxy = self.origin_coords
         self.viewer = viewer
 
     def check_mouse(self):
@@ -98,9 +95,11 @@ class GraficScene:
         if self.viewer.mouse_pressed:
             if self.prev_state == None:
                 self.prev_state = mouse_state
-            self.origin_coords[1] -= mouse_state[1]*3 - self.prev_state[1]
-            self.origin_coords[0] += mouse_state[0]*3 - self.prev_state[0]
+            self.origin_coords[0] += -(self.prev_state[0] - mouse_state[0])*60
+            self.origin_coords[1] += (self.prev_state[1] - mouse_state[1])*60
             self.prev_state = mouse_state
+        else:
+            self.prev_state = None
 
     def convert_coords(self, coords, standard):
         if standard:
@@ -110,22 +109,41 @@ class GraficScene:
 
     def cartesian_plane(self):
         x = self.origin_coords[0]
+        x_value = 0
         while x <= CONFIG['screen_width']:
             pygame.draw.line(screen, CYAN, (x, 0), (x, CONFIG['screen_height']), 1)
-            x += unit_length
+            screen.blit(font.render(f'{x_value:.1f}', False, WHITE), (x + 2 , self.origin_coords[1]))
+            x += self.unit_x
+            x_value += 1
+            
         x = self.origin_coords[0]
+        x_value = 0
         while x >= 0:
             pygame.draw.line(screen, CYAN, (x, 0), (x, CONFIG['screen_height']), 1)
-            x -= unit_length
+            screen.blit(font.render(f'{x_value:.1f}', False, WHITE), (x + 2 , self.origin_coords[1]))
+            x -= self.unit_x
+            x_value -= 1
+
         y = self.origin_coords[1]
+        y_value = 0
         while y <= CONFIG['screen_height']:
             pygame.draw.line(screen, CYAN, (0, y), (CONFIG['screen_width'], y), 1)
-            y += unit_length
+            if y_value != 0:
+                screen.blit(font.render(f'{y_value:.1f}', False, WHITE), (self.origin_coords[0]+2, y-14))
+            y += self.unit_y
+            y_value -= 1
+
         y = self.origin_coords[1]
+        y_value = 0
         while y >= 0:
             pygame.draw.line(screen, CYAN, (0, y), (CONFIG['screen_width'], y), 1)
-            y -= unit_length
+            if y_value != 0:
+                screen.blit(font.render(f'{y_value:.1f}', False, WHITE), (self.origin_coords[0]+2, y-14))
+            y -= self.unit_y
+            y_value += 1
         
+        screen.blit(font.render(f'{self.x_label}', False, WHITE), (CONFIG['screen_width']-10, self.origin_coords[1]-14))
+        screen.blit(font.render(f'{self.y_label}', False, WHITE), (self.origin_coords[0]-12, 0))
         pygame.draw.line(screen, WHITE, (self.origin_coords[0], 0), (self.origin_coords[0], CONFIG['screen_height']), 1)
         pygame.draw.line(screen, WHITE, (0, self.origin_coords[1]), (CONFIG['screen_width'], self.origin_coords[1]), 1)
 
