@@ -115,6 +115,12 @@ def test():
     grafic.check_mouse()
     grafic.cartesian_plane()
     grafic.real_functions(lambda x: -x**2, -4, 4)
+    
+    grafic.circle([1, 1], 3, (200, 200, 200))
+    grafic.line([1, 1], [2, 2], (200, 200, 200), 2)
+    grafic.line([2, 2], [3, 1], (255, 255, 255), 2)
+
+    grafic.bazier_curve([[1, 1], [2, 2], [3, 1]], 1)
 
 viewer.set_slides([test])
 viewer.init()

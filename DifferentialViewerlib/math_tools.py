@@ -255,6 +255,31 @@ class GraficScene:
             
         pygame.draw.lines(screen, color, False, point_list, 3)
 
+    def bazier_curve(self, points_list, t_max, color=(255, 255, 0), dt=0.01):
+        bezier_points = []
+        t = 0
+        while t < t_max:
+            points = points_list
+            while len(points) > 1:
+                new_points_list = []
+                for i in range(0, len(points) - 1):
+                    new_points_list.append([
+                        points[i][0] + t*(points[i + 1][0] - points[i][0]), 
+                        points[i][1] + t*(points[i + 1][1] - points[i][1])
+                    ])
+                points = new_points_list
+            
+            bezier_points.append(self.convert_coords(points[0], 1))
+            t += dt
+        
+        pygame.draw.lines(screen, color, False, bezier_points, 3)
+        
+    def line(self, init_point, end_point, color=(255, 255, 0), stroke=1):
+        pygame.draw.line(screen, color, self.convert_coords(init_point, 1), self.convert_coords(end_point, 1), stroke)
+
+    def circle(self, coords, radius, color=(255, 255, 0), fill=True):
+        pygame.draw.circle(screen, color, self.convert_coords(coords, 1), radius, width=1)
+
 class Scense3D:
     def __init__(self, r, theta, phi, viewer):
         self.r = r
