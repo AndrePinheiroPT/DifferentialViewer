@@ -110,17 +110,27 @@ def slide9():
     tools3D.differential(lorenz_attractor, [1, 1.4, 4], time)
     time+=0.01
 
-grafic = GraficScene(viewer, [40, 40], 80, 80)
+grafic = GraficScene(viewer, [40, 400], 80, 80)
+p = [[1, 1], [2, 2], [3, 1]]
 def test():
     grafic.check_mouse()
     grafic.cartesian_plane()
     grafic.real_functions(lambda x: -x**2, -4, 4)
     
-    grafic.circle([1, 1], 3, (200, 200, 200))
-    grafic.line([1, 1], [2, 2], (200, 200, 200), 2)
-    grafic.line([2, 2], [3, 1], (255, 255, 255), 2)
+    
+    for key, point in enumerate(p):
+        if (grafic.convert_coords(point, 1)[0] - 4 <= viewer.mouse_state[0] <= grafic.convert_coords(point, 1)[0] + 4) and (grafic.convert_coords(point, 1)[1] - 4 <= viewer.mouse_state[1] <= grafic.convert_coords(point, 1)[1] + 4) and viewer.mouse_pressed:
+            p[key] = grafic.convert_coords(viewer.mouse_state, 0)
+            break
 
-    grafic.bazier_curve([[1, 1], [2, 2], [3, 1]], 1)
+    grafic.bazier_curve(p, 1)
+
+    for point in p:
+        grafic.circle(point, 4, (255, 255, 255))
+    grafic.line(p[0], p[1], (255, 255, 255), 2)
+    grafic.line(p[1], p[2], (255, 255, 255), 2)
+
+    
 
 viewer.set_slides([test])
 viewer.init()

@@ -278,7 +278,8 @@ class GraficScene:
         pygame.draw.line(screen, color, self.convert_coords(init_point, 1), self.convert_coords(end_point, 1), stroke)
 
     def circle(self, coords, radius, color=(255, 255, 0), fill=True):
-        pygame.draw.circle(screen, color, self.convert_coords(coords, 1), radius, width=1)
+        integer_coords = [round(self.convert_coords(coords, 1)[0]), round(self.convert_coords(coords, 1)[1])]
+        pygame.draw.circle(screen, color, integer_coords, radius)
 
 class Scense3D:
     def __init__(self, r, theta, phi, viewer):
