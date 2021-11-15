@@ -112,16 +112,26 @@ def slide9():
 
 grafic = GraficScene(viewer, [40, 400], 80, 80)
 p = [[1, 1], [2, 2], [3, 1]]
+object_selected = None
+
 def test():
-    grafic.check_mouse()
+    global object_selected
+    if object_selected == None:
+        grafic.check_mouse()
     grafic.cartesian_plane()
     grafic.real_functions(lambda x: -x**2, -4, 4)
     
-    
-    for key, point in enumerate(p):
-        if (grafic.convert_coords(point, 1)[0] - 4 <= viewer.mouse_state[0] <= grafic.convert_coords(point, 1)[0] + 4) and (grafic.convert_coords(point, 1)[1] - 4 <= viewer.mouse_state[1] <= grafic.convert_coords(point, 1)[1] + 4) and viewer.mouse_pressed:
-            p[key] = grafic.convert_coords(viewer.mouse_state, 0)
-            break
+    if object_selected == None:
+        for key, point in enumerate(p):
+            if (grafic.convert_coords(point, 1)[0] - 4 <= viewer.mouse_state[0] <= grafic.convert_coords(point, 1)[0] + 4) and (grafic.convert_coords(point, 1)[1] - 4 <= viewer.mouse_state[1] <= grafic.convert_coords(point, 1)[1] + 4) and viewer.mouse_pressed:
+                object_selected = key
+
+                p[key] = grafic.convert_coords(viewer.mouse_state, 0)
+                break
+    elif viewer.mouse_pressed:
+        p[object_selected] = grafic.convert_coords(viewer.mouse_state, 0)
+    else:
+        object_selected = None
 
     grafic.bazier_curve(p, 1)
 
@@ -132,6 +142,6 @@ def test():
 
     
 
-viewer.set_slides([test])
+viewer.set_slides([test, slide1])
 viewer.init()
 
