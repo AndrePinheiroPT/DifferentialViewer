@@ -87,6 +87,7 @@ class GraficScene:
         self.x_label = x_label
         self.y_label = y_label
         self.prev_state = None
+        self.object_selected = None
         self.viewer = viewer
 
     def check_mouse(self):
@@ -100,6 +101,22 @@ class GraficScene:
             self.prev_state = mouse_state
         else:
             self.prev_state = None
+
+    def manipulation_points(self, points_list, condition):
+        points = points_list
+        if self.object_selected == None:
+            for key, point in enumerate(points):
+                if condition:
+                    self.object_selected = key
+                     (grafic.convert_coords(point, 1)[0] - 4 <= viewer.mouse_state[0] <= grafic.convert_coords(point, 1)[0] + 4) and (grafic.convert_coords(point, 1)[1] - 4 <= viewer.mouse_state[1] <= grafic.convert_coords(point, 1)[1] + 4) and viewer.mouse_pressed
+                    points[key] = self.convert_coords(self.viewer.mouse_state, 0)
+                    break
+        elif self.viewer.mouse_pressed:
+            points_list[self.object_selected] = self.convert_coords(self.viewer.mouse_state, 0)
+        else:
+            self.object_selected = None
+        return points_list
+
 
     def convert_coords(self, coords, standard):
         if standard:
