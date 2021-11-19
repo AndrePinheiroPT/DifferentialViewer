@@ -110,35 +110,38 @@ def slide9():
     tools3D.differential(lorenz_attractor, [1, 1.4, 4], time)
     time+=0.01
 
-grafic = GraficScene(viewer, [40, 400], 80, 80)
-p = [[1, 1], [2, 2], [3, 1]]
-object_selected = None
+grafic = GraficScene(viewer, [300, 300], 70, 70)
+p = [[1, 1], [2, 2], [3, 1], [4, 2]]
+
+
+alpha = [0.01, 0]
+points_list = []
+
+points_list.append(alpha)
+
+def trignometric_circle(t):
+    return [cos(t) - 1, sin(t)]
+
+def arc(t):
+    return [0.25*cos(t) - 1, 0.25*sin(t)]
 
 def test():
-    global object_selected
-    if object_selected == None:
-        grafic.check_mouse()
+    global points_list
     grafic.cartesian_plane()
-    grafic.real_functions(lambda x: -x**2, -4, 4)
+    grafic.parametric_functions(trignometric_circle, 0, 2*pi, (230, 230, 230))
+    grafic.parametric_functions(arc, 0, points_list[0][0], (255, 255, 0))
     
-    if object_selected == None:
-        for key, point in enumerate(p):
-            if (grafic.convert_coords(point, 1)[0] - 4 <= viewer.mouse_state[0] <= grafic.convert_coords(point, 1)[0] + 4) and (grafic.convert_coords(point, 1)[1] - 4 <= viewer.mouse_state[1] <= grafic.convert_coords(point, 1)[1] + 4) and viewer.mouse_pressed:
-                object_selected = key
+    grafic.line([0, 0], points_list[0], stroke=3)
+    grafic.line([-1, 0], [cos(points_list[0][0]) - 1, sin(points_list[0][0])], (255, 255, 255), 4)
+    
+    grafic.circle(points_list[0], 6)
 
-                p[key] = grafic.convert_coords(viewer.mouse_state, 0)
-                break
-    elif viewer.mouse_pressed:
-        p[object_selected] = grafic.convert_coords(viewer.mouse_state, 0)
-    else:
-        object_selected = None
+    grafic.line([cos(points_list[0][0]) - 1, sin(points_list[0][0])], [points_list[0][0], sin(points_list[0][0])], (255, 0, 0), 3)
+    grafic.real_functions(lambda x: sin(x), 0, points_list[0][0], color=(255,0, 0))
+    points_list = grafic.manipulation_points(points_list, [6, 6, 6, 6])
+    points_list[0][1] = 0
 
-    grafic.bazier_curve(p, 1)
 
-    for point in p:
-        grafic.circle(point, 4, (255, 255, 255))
-    grafic.line(p[0], p[1], (255, 255, 255), 2)
-    grafic.line(p[1], p[2], (255, 255, 255), 2)
 
     
 
