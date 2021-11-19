@@ -87,6 +87,7 @@ class GraficScene:
         self.x_label = x_label
         self.y_label = y_label
         self.prev_state = None
+        self.object_selected = None
         self.viewer = viewer
 
     def check_mouse(self):
@@ -101,13 +102,31 @@ class GraficScene:
         else:
             self.prev_state = None
 
+    def manipulation_points(self, points_list, hitbox):
+        points = points_list
+        if self.object_selected == None:
+            for key, point in enumerate(points):
+                if (self.convert_coords(point, 1)[0] - hitbox[0] <= self.viewer.mouse_state[0] <= self.convert_coords(point, 1)[0] + hitbox[2]) and (self.convert_coords(point, 1)[1] - hitbox[1] <= self.viewer.mouse_state[1] <= self.convert_coords(point, 1)[1] + hitbox[3]) and self.viewer.mouse_pressed:
+                    self.object_selected = key
+                     
+                    points[key] = self.convert_coords(self.viewer.mouse_state, 0)
+                    break
+        elif self.viewer.mouse_pressed:
+            points_list[self.object_selected] = self.convert_coords(self.viewer.mouse_state, 0)
+        else:
+            self.object_selected = None
+        return points_list
+
     def convert_coords(self, coords, standard):
         if standard:
             return [coords[0]*self.unit_x + self.origin_coords[0], -coords[1]*self.unit_x + self.origin_coords[1]]
         else:
             return [(coords[0] - self.origin_coords[0])/self.unit_y,-(coords[1] - self.origin_coords[1])/self.unit_y]
 
-    def cartesian_plane(self):
+    def cartesian_plane(self, move_grid=True):
+        if move_grid and self.object_selected == None:
+            self.check_mouse()
+
         x = self.origin_coords[0]
         x_value = 0
         while x <= CONFIG['screen_width']:
@@ -254,6 +273,32 @@ class GraficScene:
             t += dt
             
         pygame.draw.lines(screen, color, False, point_list, 3)
+
+    def bazier_curve(self, points_list, t_max, color=(255, 255, 0), dt=0.01):
+        bezier_points = []
+        t = 0
+        while t < t_max:
+            points = points_list
+            while len(points) > 1:
+                new_points_list = []
+                for i in range(0, len(points) - 1):
+                    new_points_list.append([
+                        points[i][0] + t*(points[i + 1][0] - points[i][0]), 
+                        points[i][1] + t*(points[i + 1][1] - points[i][1])
+                    ])
+                points = new_points_list
+            
+            bezier_points.append(self.convert_coords(points[0], 1))
+            t += dt
+        
+        pygame.draw.lines(screen, color, False, bezier_points, 3)
+        
+    def line(self, init_point, end_point, color=(255, 255, 0), stroke=1):
+        pygame.draw.line(screen, color, self.convert_coords(init_point, 1), self.convert_coords(end_point, 1), stroke)
+
+    def circle(self, coords, radius, color=(255, 255, 0)):
+        integer_coords = [round(self.convert_coords(coords, 1)[0]), round(self.convert_coords(coords, 1)[1])]
+        pygame.draw.circle(screen, color, integer_coords, radius)
 
 class Scense3D:
     def __init__(self, r, theta, phi, viewer):
