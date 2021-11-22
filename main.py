@@ -18,97 +18,6 @@ CONFIG = {
 viewer = Viewer(CONFIG)
 time = 0
 
-def gauss_curve(x, y):
-    return 4*exp(-(x**2 + y**2))
-
-def lorenz_attractor(coords):
-    dx = (10 * (coords[1] - coords[0]))
-    dy = (coords[0] * (24 - coords[2]) - coords[1])
-    dz = (coords[0] * coords[1] - 8/3 * coords[2])
-    return [dx, dy, dz]
-
-def helicoide(l):
-    return [cos(l), sin(l), l]
-
-def sphere(u, v):
-    return [5 + 2*cos(u)*sin(v), 2*sin(u)*sin(v), 2*cos(v)]
-
-def vector_f(x, y, z):
-    return [
-        x / (0.01 if (x**2 + y**2 + z**2) == 0 else (x**2 + y**2 + z**2)),
-        y / (0.01 if (x**2 + y**2 + z**2) == 0 else (x**2 + y**2 + z**2)),
-        z / (0.01 if (x**2 + y**2 + z**2) == 0 else (x**2 + y**2 + z**2))
-    ]
-
-
-tools3D = Scense3D(13, 2, 1, viewer)
-def slide1():
-    tools3D.phi += 0.006
-    tools3D.three_dimensional_space(10)
-    tools3D.parametric_line(helicoide, -10, -0.2*(viewer.time-10)**2 + 10.1 if viewer.time < 10 else 10, (0, 0, 255))
-    #tools3D.parametric_surface(sphere, [-pi, pi, -pi, pi])
-
-def slide2():
-    tools3D.phi += 0.006
-    tools3D.three_dimensional_space(10)
-    if viewer.time < 10:
-        tools3D.parametric_line(helicoide, -10, -0.2*(viewer.time)**2 + 10.1 if viewer.time < 10 else -10, (0, 0, 255))
-
-def func(t):
-    return [t, 0, 0.21*t**3 - 1.22*t**2 - 0.4*t + 8]
-def slide3():
-    tools3D.phi += 0.006
-    tools3D.three_dimensional_space(10)
-    tools3D.parametric_line(func, 0, 5)
-
-def func_surface(u, v):
-    return [u, sin(v)*(0.21*u**3 - 1.22*u**2 - 0.4*u + 8), (0.21*u**3 - 1.22*u**2 - 0.4*u + 8)*cos(v)]
-def slide4():
-    tools3D.phi += 0.006
-    tools3D.three_dimensional_space(10)
-    tools3D.parametric_line(func, 0, 5)
-    tools3D.parametric_surface(func_surface, [0, 5, 0, -0.5/pi*(viewer.time - 2*pi)**2 + 2*pi if viewer.time < 2*pi else 2*pi], dv=0.3, du=0.3)
-def slide5():
-    tools3D.phi += 0.006
-    tools3D.three_dimensional_space(10)
-    tools3D.parametric_surface(func_surface, [0, 5, 0, -0.5/pi*(viewer.time)**2 + 2*pi if viewer.time < 2*pi else 0], dv=0.3, du=0.3)
-
-
-def cossin(x, y):
-    return sin(x)*cos(y) + 4
-
-def cossin_gradient(x, y, z): 
-    return [cos(x), -sin(y), 0]
-
-def slide6():
-    tools3D.phi += 0.006
-    tools3D.three_dimensional_space(10)  
-    tools3D.function(cossin, [-10, -0.2*(viewer.time-10)**2 + 10.1 if viewer.time < 10 else 10, -10, 10])
-    viewer.time += 0.6
-
-def slide7():
-    tools3D.phi += 0.006
-    tools3D.three_dimensional_space(10)  
-    tools3D.function(cossin, [-10, 10, -10, 10])
-    tools3D.vector_field(cossin_gradient, [-10, -0.2*(viewer.time-10)**2 + 10.1 if viewer.time < 10 else 10, -10, 10, 0, 0], 1)
-    viewer.time += 0.6
-
-def slide8():
-    tools3D.phi += 0.006
-    tools3D.three_dimensional_space(10)  
-    if viewer.time < 10:
-        tools3D.function(cossin, [-10, -0.2*(viewer.time)**2 + 10.1 if viewer.time < 10 else -10, -10, 10])
-        tools3D.vector_field(cossin_gradient, [-10,  -0.2*(viewer.time)**2 + 10.1 if viewer.time < 10 else -10, -10, 10, 0, 0], 1)
-    viewer.time += 0.6
-
-time=0
-def slide9():
-    global time
-    tools3D.phi += 0.006
-    tools3D.r=30
-    tools3D.three_dimensional_space(10)  
-    tools3D.differential(lorenz_attractor, [1, 1.4, 4], time)
-    time+=0.01
 
 grafic = GraficScene(viewer, [300, 300], 70, 70)
 p = [[1, 1], [2, 2], [3, 1], [4, 2]]
@@ -116,35 +25,32 @@ p = [[1, 1], [2, 2], [3, 1], [4, 2]]
 
 alpha = [0.01, 0]
 points_list = []
-
 points_list.append(alpha)
 
 def trignometric_circle(t):
-    return [cos(t) - 1, sin(t)]
+    return [cos(t), sin(t)]
 
 def arc(t):
-    return [0.25*cos(t) - 1, 0.25*sin(t)]
+    return [0.25*cos(t), 0.25*sin(t)]
 
-def test():
+def sin_slide():
     global points_list
     grafic.cartesian_plane()
     grafic.parametric_functions(trignometric_circle, 0, 2*pi, (230, 230, 230))
     grafic.parametric_functions(arc, 0, points_list[0][0], (255, 255, 0))
     
     grafic.line([0, 0], points_list[0], stroke=3)
-    grafic.line([-1, 0], [cos(points_list[0][0]) - 1, sin(points_list[0][0])], (255, 255, 255), 4)
+    grafic.line([0, 0], [cos(points_list[0][0]), sin(points_list[0][0])], (255, 255, 255), 4)
+    grafic.line([points_list[0][0], 0], [points_list[0][0], sin(points_list[0][0])], (255, 0, 0), 4)
     
     grafic.circle(points_list[0], 6)
 
-    grafic.line([cos(points_list[0][0]) - 1, sin(points_list[0][0])], [points_list[0][0], sin(points_list[0][0])], (255, 0, 0), 3)
+    grafic.line([cos(points_list[0][0]), sin(points_list[0][0])], [points_list[0][0], sin(points_list[0][0])], (255, 0, 0), 3)
     grafic.real_functions(lambda x: sin(x), 0, points_list[0][0], color=(255,0, 0))
     points_list = grafic.manipulation_points(points_list, [6, 6, 6, 6])
     points_list[0][1] = 0
 
 
-
-    
-
-viewer.set_slides([test, slide1])
+viewer.set_slides([sin_slide])
 viewer.init()
 

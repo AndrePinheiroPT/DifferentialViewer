@@ -185,9 +185,11 @@ class GraficScene:
             n += 1
     
     def real_functions(self, function, xd_min, xd_max, dx=0.01, color=(255, 255, 0)):
-        x = xd_min
+        x = xd_min if xd_min <= xd_max else xd_max
         function_points = []
-        while xd_min <= x <= xd_max:
+
+        function_points.append(self.convert_coords((x, function(x)), 1))
+        while x <= (xd_max if xd_min < xd_max else xd_min):
             x += dx
             y = function(x)
 
@@ -197,12 +199,12 @@ class GraficScene:
             pygame.draw.lines(screen, color, False, function_points, 3)
 
     def complex_functions(self, func, domain_func, t_min, t_max, dt=0.01, color=(255, 255, 0)):
-
         complex_function_points = []
-        t = t_min 
-        while t_min <= t <= t_max:
-            t += dt
+        t = t_min if t_min <= t_max else t_max
 
+        
+        while t <= (t_max if t_min < t_max else t_min):
+            t += dt
             z = []
             for i in range(0, 2):
                 z.append(func(*domain_func(t))[i])
@@ -267,11 +269,13 @@ class GraficScene:
 
     def parametric_functions(self, func, t_min, t_max, color=(255, 255, 0), dt=0.01):
         point_list = []
-        t = t_min
-        while t <= t_max:
+        t = t_min if t_min <= t_max else t_max
+
+        point_list.append(self.convert_coords(func(t), 1))
+        while t <= (t_max if t_min < t_max else t_min):
             point_list.append(self.convert_coords(func(t), 1))
             t += dt
-            
+        
         pygame.draw.lines(screen, color, False, point_list, 3)
 
     def bazier_curve(self, points_list, t_max, color=(255, 255, 0), dt=0.01):
