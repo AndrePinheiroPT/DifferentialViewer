@@ -2,27 +2,11 @@ from DifferentialViewerlib.math_tools import *
 import pygame
 from pygame.locals import *
 
-CONFIG = {
-    'screen_width': 600,
-    'screen_height': 600,
-    'x_min': -5,
-    'x_max': 5,
-    'x_length': 1,
-    'y_min': -5,
-    'y_max': 5,
-    'y_length': 1,
-    'x_label': 'X',
-    'y_label': 'Y',
-}
-
+CONFIG = {'screen_width': 800, 'screen_height': 600}
 viewer = Viewer(CONFIG)
-time = 0
-
-
 grafic = GraficScene(viewer, [300, 300], 70, 70)
-p = [[1, 1], [2, 2], [3, 1], [4, 2]]
 
-
+time = 0
 alpha = [0.01, 0]
 points_list = []
 points_list.append(alpha)
@@ -49,6 +33,8 @@ def sin_slide():
     grafic.real_functions(lambda x: sin(x), 0, points_list[0][0], color=(255,0, 0))
     points_list = grafic.manipulation_points(points_list, [6, 6, 6, 6])
     points_list[0][1] = 0
+
+    grafic.vector([2,1], (255, 255, 255))
 
 
 viewer.set_slides([sin_slide])

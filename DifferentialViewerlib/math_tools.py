@@ -304,6 +304,34 @@ class GraficScene:
         integer_coords = [round(self.convert_coords(coords, 1)[0]), round(self.convert_coords(coords, 1)[1])]
         pygame.draw.circle(screen, color, integer_coords, radius)
 
+    def vector(self, vect, color, origin=[0, 0], stroke=4, branch_length=0.2):
+        dx = vect[0]
+        dy = vect[1]
+
+        vector_length = 0.001 if sqrt(dx**2 + dy**2) == 0 else sqrt(dx**2 + dy**2)
+
+        branch1 = (branch_length*(dy/vector_length - dx/vector_length), -branch_length*(dx/vector_length + dy/vector_length)) 
+        branch2 = (-branch_length*(dy/vector_length + dx/vector_length), branch_length*(dx/vector_length - dy/vector_length))
+
+        x_component = origin[0] + dx
+        y_component = origin[1] + dy
+        triangle = [self.convert_coords((x_component, y_component), 1), self.convert_coords((x_component + branch1[0], y_component + branch1[1]), 1), self.convert_coords((x_component + branch2[0], y_component + branch2[1]), 1)]
+        pygame.draw.line(screen, color, self.convert_coords((origin[0], origin[1]), 1), self.convert_coords((x_component, y_component), 1), stroke)
+        pygame.gfxdraw.filled_polygon(screen, triangle, color)
+
+    def vector_field(self, vect_func, xyz_limits, dist, color=(0, 255, 0), branch_length=0.01):
+        x = xyz_limits[0]
+        while x <= xyz_limits[1]:
+            y = xyz_limits[2]
+            while y <= xyz_limits[3]:
+                z = xyz_limits[4]
+                while z <= xyz_limits[5]:
+                    self.vector(vect_func(x, y, z), color, (x, y, z), 2, branch_length=branch_length)
+                    z += dist
+                y += dist
+            x += dist
+
+
 class Scense3D:
     def __init__(self, r, theta, phi, viewer):
         self.r = r
