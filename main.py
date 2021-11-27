@@ -24,7 +24,7 @@ def sin_slide():
     grafic.parametric_functions(arc, 0, points_list[0][0], (255, 255, 0))
     
     grafic.line([0, 0], points_list[0], stroke=3)
-    grafic.line([0, 0], [cos(points_list[0][0]), sin(points_list[0][0])], (255, 255, 255), 4)
+    grafic.vector([cos(points_list[0][0]), sin(points_list[0][0])], (255, 255, 255))
     grafic.line([points_list[0][0], 0], [points_list[0][0], sin(points_list[0][0])], (255, 0, 0), 4)
     
     grafic.circle(points_list[0], 6)
@@ -34,7 +34,7 @@ def sin_slide():
     points_list = grafic.manipulation_points(points_list, [6, 6, 6, 6])
     points_list[0][1] = 0
 
-    grafic.vector([2,1], (255, 255, 255))
+    
 
 
 viewer.set_slides([sin_slide])

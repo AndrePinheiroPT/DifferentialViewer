@@ -305,16 +305,16 @@ class GraficScene:
         pygame.draw.circle(screen, color, integer_coords, radius)
 
     def vector(self, vect, color, origin=[0, 0], stroke=4, branch_length=0.2):
-        dx = vect[0]
-        dy = vect[1]
+        vector_length = 0.001 if sqrt(vect[0]**2 + vect[1]**2) == 0 else sqrt(vect[0]**2 + vect[1]**2)
+        unit_vector = [-vect[0]/vector_length, -vect[1]/vector_length]
 
-        vector_length = 0.001 if sqrt(dx**2 + dy**2) == 0 else sqrt(dx**2 + dy**2)
+        theta = pi/5
 
-        branch1 = (branch_length*(dy/vector_length - dx/vector_length), -branch_length*(dx/vector_length + dy/vector_length)) 
-        branch2 = (-branch_length*(dy/vector_length + dx/vector_length), branch_length*(dx/vector_length - dy/vector_length))
+        branch1 = (branch_length*(cos(acos(unit_vector[0]) - theta)), branch_length*(sin(asin(unit_vector[1]) - theta))) 
+        branch2 = (branch_length*(cos(acos(unit_vector[0]) + theta)), branch_length*(sin(asin(unit_vector[1]) + theta)))
 
-        x_component = origin[0] + dx
-        y_component = origin[1] + dy
+        x_component = origin[0] + vect[0]
+        y_component = origin[1] + vect[1]
         triangle = [self.convert_coords((x_component, y_component), 1), self.convert_coords((x_component + branch1[0], y_component + branch1[1]), 1), self.convert_coords((x_component + branch2[0], y_component + branch2[1]), 1)]
         pygame.draw.line(screen, color, self.convert_coords((origin[0], origin[1]), 1), self.convert_coords((x_component, y_component), 1), stroke)
         pygame.gfxdraw.filled_polygon(screen, triangle, color)
