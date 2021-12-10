@@ -17,6 +17,9 @@ def trignometric_circle(t):
 def arc(t):
     return [0.25*cos(t), 0.25*sin(t)]
 
+def magnetic(x, y):
+    return [x**2 - y**2 - 4, 2*x*y]
+
 def sin_slide():
     global points_list
     grafic.cartesian_plane()
@@ -33,6 +36,8 @@ def sin_slide():
     grafic.real_functions(lambda x: sin(x), 0, points_list[0][0], color=(255,0, 0))
     points_list = grafic.manipulation_points(points_list, [6, 6, 6, 6])
     points_list[0][1] = 0
+
+    grafic.vector_field(magnetic)
 
     
 

@@ -304,14 +304,16 @@ class GraficScene:
         integer_coords = [round(self.convert_coords(coords, 1)[0]), round(self.convert_coords(coords, 1)[1])]
         pygame.draw.circle(screen, color, integer_coords, radius)
 
-    def vector(self, vect, color, origin=[0, 0], stroke=4, branch_length=0.2):
+    def vector(self, vect, color, origin=[0, 0], stroke=4, angle=pi/7):
         vector_length = 0.001 if sqrt(vect[0]**2 + vect[1]**2) == 0 else sqrt(vect[0]**2 + vect[1]**2)
         unit_vector = [-vect[0]/vector_length, -vect[1]/vector_length]
 
-        theta = pi/5
+        theta = angle
 
-        branch1 = (branch_length*(cos(acos(unit_vector[0]) - theta)), branch_length*(sin(asin(unit_vector[1]) - theta))) 
-        branch2 = (branch_length*(cos(acos(unit_vector[0]) + theta)), branch_length*(sin(asin(unit_vector[1]) + theta)))
+        vector_angle = (2*pi - acos(unit_vector[0]) if unit_vector[1] <= 0 else acos(unit_vector[0]))
+
+        branch1 = [0.2*cos(vector_angle - theta), 0.2*sin(vector_angle - theta)]
+        branch2 = [0.2*cos(vector_angle + theta), 0.2*sin(vector_angle + theta)]
 
         x_component = origin[0] + vect[0]
         y_component = origin[1] + vect[1]
@@ -319,17 +321,16 @@ class GraficScene:
         pygame.draw.line(screen, color, self.convert_coords((origin[0], origin[1]), 1), self.convert_coords((x_component, y_component), 1), stroke)
         pygame.gfxdraw.filled_polygon(screen, triangle, color)
 
-    def vector_field(self, vect_func, xyz_limits, dist, color=(0, 255, 0), branch_length=0.01):
-        x = xyz_limits[0]
-        while x <= xyz_limits[1]:
-            y = xyz_limits[2]
-            while y <= xyz_limits[3]:
-                z = xyz_limits[4]
-                while z <= xyz_limits[5]:
-                    self.vector(vect_func(x, y, z), color, (x, y, z), 2, branch_length=branch_length)
-                    z += dist
-                y += dist
-            x += dist
+    def vector_field(self, vect_func, scaler=0.1, len_dist=1, color=(0, 255, 0)):
+        x = self.convert_coords([0, 0], 0)[0]
+        while x <= self.convert_coords([CONFIG['screen_width'], 0], 0)[0]:
+            y = self.convert_coords([0, CONFIG['screen_height']], 0)[1]
+            while y <= self.convert_coords([0, 0], 0)[1]:
+                vx = scaler*vect_func(x, y)[0]
+                vy = scaler*vect_func(x, y)[1]
+                self.vector((vx, vy), color, (x, y), 2)
+                y += len_dist
+            x += len_dist
 
 
 class Scense3D:
