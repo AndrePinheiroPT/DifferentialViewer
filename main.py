@@ -4,7 +4,7 @@ from pygame.locals import *
 
 CONFIG = {'screen_width': 800, 'screen_height': 600}
 viewer = Viewer(CONFIG)
-grafic = GraficScene(viewer, [300, 300], 70, 70)
+grafic = GraficScene(viewer, [300, 300], 50, 50)
 
 time = 0
 alpha = [0.01, 0]

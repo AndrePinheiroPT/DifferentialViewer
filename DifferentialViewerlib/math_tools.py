@@ -321,17 +321,62 @@ class GraficScene:
         pygame.draw.line(screen, color, self.convert_coords((origin[0], origin[1]), 1), self.convert_coords((x_component, y_component), 1), stroke)
         pygame.gfxdraw.filled_polygon(screen, triangle, color)
 
-    def vector_field(self, vect_func, scaler=0.1, len_dist=1, color=(0, 255, 0)):
-        x = self.convert_coords([0, 0], 0)[0]
-        while x <= self.convert_coords([CONFIG['screen_width'], 0], 0)[0]:
-            y = self.convert_coords([0, CONFIG['screen_height']], 0)[1]
-            while y <= self.convert_coords([0, 0], 0)[1]:
-                vx = scaler*vect_func(x, y)[0]
-                vy = scaler*vect_func(x, y)[1]
-                self.vector((vx, vy), color, (x, y), 2)
-                y += len_dist
-            x += len_dist
+    def __vector_render(self, vect_func, x, y):
+        
+        vx = vect_func(x, y)[0]
+        vy = vect_func(x, y)[1]
 
+        t = sqrt(vx**2 + vy**2)/50 if sqrt(vx**2 + vy**2)/50 <= 1 else 1
+        h = t*510 if t <= 0.5 else 255
+        q = 255 if t <= 0.5 else (-t*510 + 510)
+
+        return [
+            vx/(0.01 if sqrt(vx**2 + vy**2) == 0 else sqrt(vx**2 + vy**2)), 
+            vy/(0.01 if sqrt(vx**2 + vy**2) == 0 else sqrt(vx**2 + vy**2)),
+            [h, q, 0]
+        ]
+
+    def vector_field(self, vect_func):
+        x = self.origin_coords[0]
+        x_value = 0
+        while x <= CONFIG['screen_width'] + self.unit_x:
+            y = self.origin_coords[1]
+            y_value = 0
+            while y <= CONFIG['screen_height'] + self.unit_y:
+                if y_value != 0:
+                    self.vector(self.__vector_render(vect_func, x_value, y_value)[:2], self.__vector_render(vect_func, x_value, y_value)[2], (x_value, y_value), 2)
+                y += self.unit_y
+                y_value -= 1
+
+            y = self.origin_coords[1]
+            y_value = 0
+            while y >= 0 - self.unit_y:
+                self.vector(self.__vector_render(vect_func, x_value, y_value)[:2], self.__vector_render(vect_func, x_value, y_value)[2], (x_value, y_value), 2)
+                y -= self.unit_y
+                y_value += 1
+
+            x += self.unit_x
+            x_value += 1
+            
+        x = self.origin_coords[0]
+        x_value = 0
+        while x >= 0 - self.unit_x:
+            y = self.origin_coords[1]
+            y_value = 0
+            while y <= CONFIG['screen_height'] + self.unit_y:
+                if y_value != 0:
+                    self.vector(self.__vector_render(vect_func, x_value, y_value)[:2], self.__vector_render(vect_func, x_value, y_value)[2], (x_value, y_value), 2)
+                y += self.unit_y
+                y_value -= 1
+
+            y = self.origin_coords[1]
+            y_value = 0
+            while y >= 0 - self.unit_y:
+                self.vector(self.__vector_render(vect_func, x_value, y_value)[:2], self.__vector_render(vect_func, x_value, y_value)[2], (x_value, y_value), 2)
+                y -= self.unit_y
+                y_value += 1
+            x -= self.unit_x
+            x_value -= 1
 
 class Scense3D:
     def __init__(self, r, theta, phi, viewer):
