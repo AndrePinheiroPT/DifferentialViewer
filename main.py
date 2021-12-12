@@ -30,17 +30,15 @@ def sin_slide():
     grafic.vector([cos(points_list[0][0]), sin(points_list[0][0])], (255, 255, 255))
     grafic.line([points_list[0][0], 0], [points_list[0][0], sin(points_list[0][0])], (255, 0, 0), 4)
     
-    grafic.circle(points_list[0], 6)
+    grafic.dot(points_list[0])
 
     grafic.line([cos(points_list[0][0]), sin(points_list[0][0])], [points_list[0][0], sin(points_list[0][0])], (255, 0, 0), 3)
     grafic.real_functions(lambda x: sin(x), 0, points_list[0][0], color=(255,0, 0))
     points_list = grafic.manipulation_points(points_list, [6, 6, 6, 6])
     points_list[0][1] = 0
 
+    grafic.polygon([(-1.3, 0), (0, 0), (0, 1)])
     grafic.vector_field(magnetic)
-
-    
-
 
 viewer.set_slides([sin_slide])
 viewer.init()

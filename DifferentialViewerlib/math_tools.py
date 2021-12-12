@@ -91,13 +91,13 @@ class GraficScene:
         self.viewer = viewer
 
     def check_mouse(self):
-        mouse_state = self.convert_coords(pygame.mouse.get_pos(), 0)
+        mouse_state = pygame.mouse.get_pos()
         
         if self.viewer.mouse_pressed:
             if self.prev_state == None:
                 self.prev_state = mouse_state
-            self.origin_coords[0] += -(self.prev_state[0] - mouse_state[0])*60
-            self.origin_coords[1] += (self.prev_state[1] - mouse_state[1])*60
+            self.origin_coords[0] += -(self.prev_state[0] - mouse_state[0])*.5
+            self.origin_coords[1] += -(self.prev_state[1] - mouse_state[1])*.5
             self.prev_state = mouse_state
         else:
             self.prev_state = None
@@ -300,9 +300,20 @@ class GraficScene:
     def line(self, init_point, end_point, color=(255, 255, 0), stroke=1):
         pygame.draw.line(screen, color, self.convert_coords(init_point, 1), self.convert_coords(end_point, 1), stroke)
 
-    def circle(self, coords, radius, color=(255, 255, 0)):
+    def dot(self, coords, color=(255, 255, 0)):
         integer_coords = [round(self.convert_coords(coords, 1)[0]), round(self.convert_coords(coords, 1)[1])]
-        pygame.draw.circle(screen, color, integer_coords, radius)
+        pygame.draw.circle(screen, color, integer_coords, 5)
+
+    def circle(self, coords, radius, color=(255, 255, 0), stroke=0):
+        integer_coords = [round(self.convert_coords(coords, 1)[0]), round(self.convert_coords(coords, 1)[1])]
+        pygame.draw.circle(screen, color, integer_coords, radius, stroke)
+
+    def polygon(self, points_list, color=(255, 255, 0), stroke=0):
+        standard_points = []
+        for point in points_list:
+            standard_points.append(self.convert_coords(point, 1))
+        
+        pygame.draw.polygon(screen, color, standard_points, stroke)
 
     def vector(self, vect, color, origin=[0, 0], stroke=4, angle=pi/7):
         vector_length = 0.001 if sqrt(vect[0]**2 + vect[1]**2) == 0 else sqrt(vect[0]**2 + vect[1]**2)
