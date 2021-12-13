@@ -5,41 +5,13 @@ from pygame.locals import *
 CONFIG = {'screen_width': 800, 'screen_height': 600}
 viewer = Viewer(CONFIG)
 grafic = GraficScene(viewer, [300, 300], 50, 50)
+tools3D = Scense3D(20, 0, 0, viewer)
 
 time = 0
-alpha = [0.01, 0]
-points_list = []
-points_list.append(alpha)
 
-def trignometric_circle(t):
-    return [cos(t), sin(t)]
-
-def arc(t):
-    return [0.25*cos(t), 0.25*sin(t)]
-
-def magnetic(x, y):
-    return [x**2 - y**2 - 4, 2*x*y]
-
-def sin_slide():
-    global points_list
-    grafic.cartesian_plane()
-    grafic.parametric_functions(trignometric_circle, 0, 2*pi, (230, 230, 230))
-    grafic.parametric_functions(arc, 0, points_list[0][0], (255, 255, 0))
-    
-    grafic.line([0, 0], points_list[0], stroke=3)
-    grafic.vector([cos(points_list[0][0]), sin(points_list[0][0])], (255, 255, 255))
-    grafic.line([points_list[0][0], 0], [points_list[0][0], sin(points_list[0][0])], (255, 0, 0), 4)
-    
-    grafic.dot(points_list[0])
-
-    grafic.line([cos(points_list[0][0]), sin(points_list[0][0])], [points_list[0][0], sin(points_list[0][0])], (255, 0, 0), 3)
-    grafic.real_functions(lambda x: sin(x), 0, points_list[0][0], color=(255,0, 0))
-    points_list = grafic.manipulation_points(points_list, [6, 6, 6, 6])
-    points_list[0][1] = 0
-
-    grafic.polygon([(-1.3, 0), (0, 0), (0, 1)])
-    grafic.vector_field(magnetic)
-
-viewer.set_slides([sin_slide])
+def scene():
+    tools3D.three_dimensional_space()
+    tools3D.vector((1, 1, 2), (255, 0, 0), (1, 1, 1))
+viewer.set_slides([scene])
 viewer.init()
 
