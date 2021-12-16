@@ -441,10 +441,7 @@ class Scense3D:
             
     def vector(self, vect, color, origin=(0, 0, 0), stroke=3, branch_length=0.03):
         
-        v_u = [-origin[0] + vect[1]*(1 - origin[1])/vect[0] + vect[2]*(1 - origin[2])/vect[0], 1, 1]
-        unit_u = [v_u[i]/sqrt(v_u[0]**2 + v_u[1]**2 + v_u[2]**2) for i in range(0, 3)]
-        v_v = [v_u[1]*vect[2] - v_u[2]*vect[1], v_u[0]*vect[2] - v_u[2]*vect[0], v_u[0]*vect[1] - v_u[1]*vect[0]]
-        unit_v = [v_v[i]/sqrt(v_v[0]**2 + v_v[1]**2 + v_v[2]**2) for i in range(0, 3)]
+      
 
         dx = self.coord3d2d(vect)[0]
         dy = self.coord3d2d(vect)[1]
