@@ -399,6 +399,20 @@ class Scense3D:
         self.viewer = viewer
         self.dxy = [0, 0]
 
+    def __cone(self, u, v, theta=pi/4, phi=pi/4):
+        r = 0.25
+        h = 0.5
+
+        
+        x = (r*u/h)*cos(v)
+        y = (r*u/h)*sin(v)
+        z = u
+        return [
+            x*cos(phi) - (y*cos(theta) - z*sin(theta))*sin(phi),
+            (y*cos(theta) - z*sin(theta))*cos(phi) + x*sin(phi),
+            z*cos(theta) + y*sin(theta)
+        ]
+
     def coord3d2d(self, point):
         self.check_mouse()
         matrix = (
@@ -441,7 +455,7 @@ class Scense3D:
             
     def vector(self, vect, color, origin=(0, 0, 0), stroke=3, branch_length=0.03):
         
-      
+        self.parametric_surface(self.__cone, [0, 7*tan(pi/10), 0, 2*pi], (255, 255, 255, 255))
 
         dx = self.coord3d2d(vect)[0]
         dy = self.coord3d2d(vect)[1]
