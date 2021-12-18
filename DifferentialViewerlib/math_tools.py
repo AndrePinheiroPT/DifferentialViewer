@@ -399,18 +399,22 @@ class Scense3D:
         self.viewer = viewer
         self.dxy = [0, 0]
 
-    def __cone(self, u, v, theta=pi/4, phi=pi/4):
-        r = 0.25
-        h = 0.5
+        self.vect_theta = pi/2
+        self.vect_phi = -pi/2
+        self.vect_arrow = [6, 0, 0]
+
+    def __cone(self, u, v):
+        r = 0.5
+        h = 1
 
         
         x = (r*u/h)*cos(v)
         y = (r*u/h)*sin(v)
         z = u
         return [
-            x*cos(phi) - (y*cos(theta) - z*sin(theta))*sin(phi),
-            (y*cos(theta) - z*sin(theta))*cos(phi) + x*sin(phi),
-            z*cos(theta) + y*sin(theta)
+            self.vect_arrow[0] + x*cos(self.vect_phi) - (y*cos(self.vect_theta) - z*sin(self.vect_theta))*sin(self.vect_phi),
+            self.vect_arrow[1] + (y*cos(self.vect_theta) - z*sin(self.vect_theta))*cos(self.vect_phi) + x*sin(self.vect_phi),
+            self.vect_arrow[2] + z*cos(self.vect_theta) + y*sin(self.vect_theta)
         ]
 
     def coord3d2d(self, point):
@@ -453,25 +457,23 @@ class Scense3D:
                 self.dxy = [self.theta, self.phi]
             self.can_change = False
             
-    def vector(self, vect, color, origin=(0, 0, 0), stroke=3, branch_length=0.03):
-        
-        self.parametric_surface(self.__cone, [0, 7*tan(pi/10), 0, 2*pi], (255, 255, 255, 255))
+    def vector(self, vect, color, origin=(0, 0, 0), stroke=3):
+        norm = sqrt(vect[0]**2 + vect[1]**2 + vect[2]**2)
+
+        self.vect_theta = -acos(vect[2]/(0.001 if norm == 0 else norm))
+        self.vect_phi = atan(vect[1]/(0.001 if vect[0] == 0 else vect[0]))
+        self.vect_arrow = [origin[i] + vect[i] for i in range(0, 3)]
+
+        self.parametric_surface(self.__cone, [0, 1, 0, 2*pi], (255, 255, 255, 255))
 
         dx = self.coord3d2d(vect)[0]
         dy = self.coord3d2d(vect)[1]
-
-        vector_length = 0.001 if sqrt(dx**2 + dy**2) == 0 else sqrt(dx**2 + dy**2)
-
-        branch1 = (branch_length*(dy/vector_length - dx/vector_length), -branch_length*(dx/vector_length + dy/vector_length)) 
-        branch2 = (-branch_length*(dy/vector_length + dx/vector_length), branch_length*(dx/vector_length - dy/vector_length))
 
         origin_point = [self.coord3d2d(origin)[0], self.coord3d2d(origin)[1]]
 
         x_component = origin_point[0] + dx
         y_component = origin_point[1] + dy
-        triangle = [self.convert((x_component, y_component), 1), self.convert((x_component + branch1[0], y_component + branch1[1]), 1), self.convert((x_component + branch2[0], y_component + branch2[1]), 1)]
         pygame.draw.line(screen, color, self.convert((origin_point[0], origin_point[1]), 1), self.convert((x_component, y_component), 1), stroke)
-        pygame.gfxdraw.filled_polygon(screen, triangle, color)
 
     def vector_field(self, vect_func, xyz_limits, dist, color=(0, 255, 0), branch_length=0.01):
         x = xyz_limits[0]
