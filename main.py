@@ -11,8 +11,9 @@ time = 0
 
 
 def scene():
+    tools3D.vector((1, 1, 4), (255, 0, 0))
     tools3D.three_dimensional_space()
-    #tools3D.vector((1, 1, 2), (255, 0, 0), (1, 1, 1))
+    
     #tools3D.parametric_surface(cone, [0, 7*tan(pi/10), 0, 2*pi], (255, 255, 255, 255))
 viewer.set_slides([scene])
 viewer.init()

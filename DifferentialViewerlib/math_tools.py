@@ -460,11 +460,11 @@ class Scense3D:
     def vector(self, vect, color, origin=(0, 0, 0), stroke=3):
         norm = sqrt(vect[0]**2 + vect[1]**2 + vect[2]**2)
 
-        self.vect_theta = -acos(vect[2]/(0.001 if norm == 0 else norm))
-        self.vect_phi = atan(vect[1]/(0.001 if vect[0] == 0 else vect[0]))
+        self.vect_theta = acos(vect[2]/(0.001 if norm == 0 else norm)) + pi
+        self.vect_phi = atan(vect[1]/(0.001 if vect[0] == 0 else vect[0])) + pi/2
         self.vect_arrow = [origin[i] + vect[i] for i in range(0, 3)]
 
-        self.parametric_surface(self.__cone, [0, 1, 0, 2*pi], (255, 255, 255, 255))
+        self.parametric_surface(self.__cone, [0, 1, 0, 2*pi], (*color, 250))
 
         dx = self.coord3d2d(vect)[0]
         dy = self.coord3d2d(vect)[1]
