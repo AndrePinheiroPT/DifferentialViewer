@@ -424,7 +424,7 @@ class Scense3D:
             ((1/self.r)*sin(self.phi)*cos(self.theta), (1/self.r)*cos(self.phi)*cos(self.theta), (1/self.r)*sin(self.theta)),
             (0, 0, 0)
         )
-
+        
         new_point = [0, 0]
         for k in range(0, 2):
             for i in range(0, 3):
@@ -460,8 +460,8 @@ class Scense3D:
     def vector(self, vect, color, origin=(0, 0, 0), stroke=3):
         norm = sqrt(vect[0]**2 + vect[1]**2 + vect[2]**2)
 
-        self.vect_theta = acos(vect[2]/(0.001 if norm == 0 else norm)) + pi
-        self.vect_phi = atan(vect[1]/(0.001 if vect[0] == 0 else vect[0])) + pi/2
+        self.vect_theta = acos(vect[2]/(0.001 if norm == 0 else norm))
+        self.vect_phi = atan(vect[1]/(0.001 if vect[0] == 0 else vect[0]))
         self.vect_arrow = [origin[i] + vect[i] for i in range(0, 3)]
 
         self.parametric_surface(self.__cone, [0, 1, 0, 2*pi], (*color, 250))
@@ -475,14 +475,14 @@ class Scense3D:
         y_component = origin_point[1] + dy
         pygame.draw.line(screen, color, self.convert((origin_point[0], origin_point[1]), 1), self.convert((x_component, y_component), 1), stroke)
 
-    def vector_field(self, vect_func, xyz_limits, dist, color=(0, 255, 0), branch_length=0.01):
+    def vector_field(self, vect_func, xyz_limits, dist, color=(0, 255, 0)):
         x = xyz_limits[0]
         while x <= xyz_limits[1]:
             y = xyz_limits[2]
             while y <= xyz_limits[3]:
                 z = xyz_limits[4]
                 while z <= xyz_limits[5]:
-                    self.vector(vect_func(x, y, z), color, (x, y, z), 2, branch_length=branch_length)
+                    self.vector(vect_func(x, y, z), color, (x, y, z), 2)
                     z += dist
                 y += dist
             x += dist
