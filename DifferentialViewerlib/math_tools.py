@@ -404,8 +404,8 @@ class Scense3D:
         self.vect_arrow = [6, 0, 0]
 
     def __cone(self, u, v):
-        r = 0.5
-        h = 1
+        r = 0.25
+        h = 0.5
 
         
         x = (r*u/h)*cos(v)
@@ -420,8 +420,8 @@ class Scense3D:
     def coord3d2d(self, point):
         self.check_mouse()
         matrix = (
-            ((1/self.r)*cos(self.phi), -(1/self.r)*sin(self.phi), 0),
-            ((1/self.r)*sin(self.phi)*cos(self.theta), (1/self.r)*cos(self.phi)*cos(self.theta), (1/self.r)*sin(self.theta)),
+            ((1/self.r)*sin(self.phi), (1/self.r)*cos(self.phi), 0),
+            (-(1/self.r)*cos(self.phi)*cos(self.theta), (1/self.r)*sin(self.phi)*cos(self.theta), (1/self.r)*sin(self.theta)),
             (0, 0, 0)
         )
         
@@ -460,11 +460,11 @@ class Scense3D:
     def vector(self, vect, color, origin=(0, 0, 0), stroke=3):
         norm = sqrt(vect[0]**2 + vect[1]**2 + vect[2]**2)
 
-        self.vect_theta = acos(vect[2]/(0.001 if norm == 0 else norm))
-        self.vect_phi = atan(vect[1]/(0.001 if vect[0] == 0 else vect[0]))
+        self.vect_theta = acos(vect[2]/(0.001 if norm == 0 else norm))*(-1 if vect[0] < 0 else 1)  -pi
+        self.vect_phi = pi/2 + atan(vect[1]/(0.001 if vect[0] == 0 else vect[0]))
         self.vect_arrow = [origin[i] + vect[i] for i in range(0, 3)]
 
-        self.parametric_surface(self.__cone, [0, 1, 0, 2*pi], (*color, 250))
+        self.parametric_surface(self.__cone, [0, 0.5, 0, 2*pi], (*color, 250))
 
         dx = self.coord3d2d(vect)[0]
         dy = self.coord3d2d(vect)[1]
@@ -475,17 +475,35 @@ class Scense3D:
         y_component = origin_point[1] + dy
         pygame.draw.line(screen, color, self.convert((origin_point[0], origin_point[1]), 1), self.convert((x_component, y_component), 1), stroke)
 
-    def vector_field(self, vect_func, xyz_limits, dist, color=(0, 255, 0)):
+    def vector_field(self, vect_func, xyz_limits, dist):
         x = xyz_limits[0]
         while x <= xyz_limits[1]:
             y = xyz_limits[2]
             while y <= xyz_limits[3]:
                 z = xyz_limits[4]
                 while z <= xyz_limits[5]:
-                    self.vector(vect_func(x, y, z), color, (x, y, z), 2)
+                    vect_row = self.__vector_render(vect_func, x, y, z)
+                    self.vector(vect_row[:3], vect_row[3], (x, y, z), 2)
                     z += dist
                 y += dist
             x += dist
+
+    def __vector_render(self, vect_func, x, y, z):
+        
+        vx = vect_func(x, y, z)[0]
+        vy = vect_func(x, y, z)[1]
+        vz = vect_func(x, y, z)[2]
+
+        t = sqrt(vx**2 + vy**2 + vz**2)/50 if sqrt(vx**2 + vy**2 + vz**2)/50 <= 1 else 1
+        h = t*510 if t <= 0.5 else 255
+        q = 255 if t <= 0.5 else (-t*510 + 510)
+
+        return [
+            2*vx/(0.01 if sqrt(vx**2 + vy**2 + vz**2) == 0 else sqrt(vx**2 + vy**2 + vz**2)), 
+            2*vy/(0.01 if sqrt(vx**2 + vy**2 + vz**2) == 0 else sqrt(vx**2 + vy**2 + vz**2)),
+            2*vz/(0.01 if sqrt(vx**2 + vy**2 + vz**2) == 0 else sqrt(vx**2 + vy**2 + vz**2)),
+            [h, q, 0]
+        ]
 
     def three_dimensional_space(self, scale=6):
         self.vector([2*scale, 0, 0], (255, 255, 255), [-scale, 0, 0], 2)
