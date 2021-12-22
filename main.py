@@ -1,4 +1,4 @@
-from DifferentialViewerlib.math_tools import *
+from Matiklib.math_tools import *
 import pygame
 from pygame.locals import *
 
@@ -11,10 +11,7 @@ time = 0
 
 def vect_field(x, y, z):
     r = 0.01 if (x**2 + y**2 + z**2) == 0 else (x**2 + y**2 + z**2)
-    return [
-        -x/r, 
-        -y/r, 
-        -z/r]
+    return [-x/r, -y/r, -z/r]
 
 def scene():
     global time
@@ -26,7 +23,6 @@ def scene():
     tools3D.vector_field(vect_field, [-6, 6, -6, 6,-6, 6], 4)
     time += 0.01
     
-    #tools3D.parametric_surface(cone, [0, 7*tan(pi/10), 0, 2*pi], (255, 255, 255, 255))
 viewer.set_slides([scene])
 viewer.init()
 

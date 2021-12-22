@@ -1,2 +1,6 @@
-# DifferentialViewer
-Do you have a differential equation and you want see it? My program can help you with your goal!
+# Matik
+Do you like work with math? Check out this library which can help you 
+with some math intuition, apresetation of math concepts and create interactive graphs as 
+you want!
+
+WIP
