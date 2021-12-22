@@ -5,7 +5,7 @@ from pygame.locals import *
 CONFIG = {'screen_width': 800, 'screen_height': 600}
 viewer = Viewer(CONFIG)
 grafic = GraficScene(viewer, [300, 300], 50, 50)
-tools3D = Scense3D(20, 0, 0, viewer)
+tools3D = Scense3D(10, 0, 0, viewer)
 
 time = 0
 
@@ -19,11 +19,11 @@ def vect_field(x, y, z):
 def scene():
     global time
     tools3D.phi = time
-    tools3D.vector((2, 2, 1), (255, 0, 0), (3, 3, 1))
+    
+    tools3D.cartesian_plane3D()
+    tools3D.vector((1, 0, 0), (255, 0, 0))
     tools3D.vector((-2, -2, 3), (255, 0, 0))
     tools3D.vector_field(vect_field, [-6, 6, -6, 6,-6, 6], 4)
-    tools3D.three_dimensional_space()
-
     time += 0.01
     
     #tools3D.parametric_surface(cone, [0, 7*tan(pi/10), 0, 2*pi], (255, 255, 255, 255))

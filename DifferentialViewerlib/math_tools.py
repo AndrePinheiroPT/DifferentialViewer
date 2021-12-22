@@ -399,25 +399,25 @@ class Scense3D:
         self.viewer = viewer
         self.dxy = [0, 0]
 
-        self.vect_theta = pi/2
-        self.vect_phi = -pi/2
-        self.vect_arrow = [6, 0, 0]
-
     def __cone(self, u, v):
         r = 0.25
         h = 0.5
+        return [(r*u/h)*cos(v), (r*u/h)*sin(v), u]
 
+    def __vector_render(self, vect_func, x, y, z):
         
-        x = (r*u/h)*cos(v)
-        y = (r*u/h)*sin(v)
-        z = u
-        return [
-            self.vect_arrow[0] + x*cos(self.vect_phi) - (y*cos(self.vect_theta) - z*sin(self.vect_theta))*sin(self.vect_phi),
-            self.vect_arrow[1] + (y*cos(self.vect_theta) - z*sin(self.vect_theta))*cos(self.vect_phi) + x*sin(self.vect_phi),
-            self.vect_arrow[2] + z*cos(self.vect_theta) + y*sin(self.vect_theta)
-        ]
+        vx = vect_func(x, y, z)[0]
+        vy = vect_func(x, y, z)[1]
+        vz = vect_func(x, y, z)[2]
+        norm = (0.01 if sqrt(vx**2 + vy**2 + vz**2) == 0 else sqrt(vx**2 + vy**2 + vz**2))
 
-    def coord3d2d(self, point):
+        t = sqrt(vx**2 + vy**2 + vz**2)/50 if sqrt(vx**2 + vy**2 + vz**2)/50 <= 1 else 1
+        h = t*510 if t <= 0.5 else 255
+        q = 255 if t <= 0.5 else (-t*510 + 510)
+
+        return [2*vx/norm, 2*vy/norm, 2*vz/norm, [h, q, 0]]
+
+    def t3d_to_2d(self, point):
         self.check_mouse()
         matrix = (
             ((1/self.r)*sin(self.phi), (1/self.r)*cos(self.phi), 0),
@@ -434,15 +434,9 @@ class Scense3D:
 
     def convert(self, coords, standard=True):
         if standard:
-            return [
-                CONFIG['screen_width']/2*(coords[0] + 1),
-                CONFIG['screen_height']/2*(1 - coords[1])
-            ]
+            return [CONFIG['screen_width']/2*(coords[0] + 1), CONFIG['screen_height']/2*(1 - coords[1])]
         else:
-            return [
-                coords[0]*2 / CONFIG['screen_width'] - 1,
-                -coords[1]*2 / CONFIG['screen_height'] + 1
-            ]
+            return [coords[0]*2 / CONFIG['screen_width'] - 1, -coords[1]*2 / CONFIG['screen_height'] + 1]
 
     def check_mouse(self):
         mouse_state = self.convert(pygame.mouse.get_pos(), 0)
@@ -460,16 +454,16 @@ class Scense3D:
     def vector(self, vect, color, origin=(0, 0, 0), stroke=3):
         norm = sqrt(vect[0]**2 + vect[1]**2 + vect[2]**2)
 
-        self.vect_theta = acos(vect[2]/(0.001 if norm == 0 else norm))*(-1 if vect[0] < 0 else 1)  -pi
-        self.vect_phi = pi/2 + atan(vect[1]/(0.001 if vect[0] == 0 else vect[0]))
-        self.vect_arrow = [origin[i] + vect[i] for i in range(0, 3)]
+        theta = acos(vect[2]/(0.001 if norm == 0 else norm))*(-1 if vect[0] < 0 else 1)  -pi
+        phi = pi/2 + atan(vect[1]/(0.001 if vect[0] == 0 else vect[0]))
+        trans_vect = [origin[i] + vect[i] for i in range(0, 3)]
 
-        self.parametric_surface(self.__cone, [0, 0.5, 0, 2*pi], (*color, 250))
+        self.parametric_surface(self.__cone, [0, 0.5, 0, 2*pi], (*color, 250), rotation=(theta, phi), translation=trans_vect)
 
-        dx = self.coord3d2d(vect)[0]
-        dy = self.coord3d2d(vect)[1]
+        dx = self.t3d_to_2d(vect)[0]
+        dy = self.t3d_to_2d(vect)[1]
 
-        origin_point = [self.coord3d2d(origin)[0], self.coord3d2d(origin)[1]]
+        origin_point = [self.t3d_to_2d(origin)[0], self.t3d_to_2d(origin)[1]]
 
         x_component = origin_point[0] + dx
         y_component = origin_point[1] + dy
@@ -488,38 +482,25 @@ class Scense3D:
                 y += dist
             x += dist
 
-    def __vector_render(self, vect_func, x, y, z):
-        
-        vx = vect_func(x, y, z)[0]
-        vy = vect_func(x, y, z)[1]
-        vz = vect_func(x, y, z)[2]
-
-        t = sqrt(vx**2 + vy**2 + vz**2)/50 if sqrt(vx**2 + vy**2 + vz**2)/50 <= 1 else 1
-        h = t*510 if t <= 0.5 else 255
-        q = 255 if t <= 0.5 else (-t*510 + 510)
-
-        return [
-            2*vx/(0.01 if sqrt(vx**2 + vy**2 + vz**2) == 0 else sqrt(vx**2 + vy**2 + vz**2)), 
-            2*vy/(0.01 if sqrt(vx**2 + vy**2 + vz**2) == 0 else sqrt(vx**2 + vy**2 + vz**2)),
-            2*vz/(0.01 if sqrt(vx**2 + vy**2 + vz**2) == 0 else sqrt(vx**2 + vy**2 + vz**2)),
-            [h, q, 0]
-        ]
-
-    def three_dimensional_space(self, scale=6):
+    def cartesian_plane3D(self, scale=6):
+        for k in range(-3, 4):
+            self.parametric_line(lambda t: (k, -0.2+t, 0), 0, 0.4, (255, 255, 255))
+            self.parametric_line(lambda t: (-0.2+t, k, 0), 0, 0.4, (255, 255, 255))
+            self.parametric_line(lambda t: (0, -0.2+t, k), 0, 0.4, (255, 255, 255))
         self.vector([2*scale, 0, 0], (255, 255, 255), [-scale, 0, 0], 2)
         self.vector([0, 2*scale, 0], (255, 255, 255), [0, -scale, 0], 2)
         self.vector([0, 0, 2*scale], (255, 255, 255), [0, 0, -scale], 2)
 
-    def parametric_line(self, func, l_min, l_max, color=(255, 255, 0), dl=0.1, stroke=1):
+    def parametric_line(self, func, l_min, l_max, color=(255, 255, 0), dl=0.1):
         l = l_min
         line_points = []
         while l <= l_max:
-            line_points.append(self.convert(self.coord3d2d(func(l)), 1))
+            line_points.append(self.convert(self.t3d_to_2d(func(l)), 1))
             l += dl
 
         pygame.draw.lines(screen, color, False, line_points, 3)
 
-    def parametric_surface(self, func, uv_limits, color=(0, 0, 200, 100), du=0.6, dv=0.6):
+    def parametric_surface(self, func, uv_limits, color=(0, 0, 200, 100), du=0.6, dv=0.6, rotation=(0, 0), translation=(0, 0, 0)):
         polygons = []
         x = uv_limits[0]
         while x < uv_limits[1]:
@@ -528,7 +509,13 @@ class Scense3D:
                 ds = []
                 for i in range(0, 2):
                     for j in range(0 + 1*i, 2 - 3*i, 1 -2*i):
-                        ds.append(self.convert(self.coord3d2d(func(x + i*du, y + j*dv)) , 1))
+                        output = func(x + i*du, y + j*dv)
+                        new_output = [
+                            translation[0] + output[0]*cos(rotation[1]) - (output[1]*cos(rotation[0]) - output[2]*sin(rotation[0]))*sin(rotation[1]),
+                            translation[1] + (output[1]*cos(rotation[0]) - output[2]*sin(rotation[0]))*cos(rotation[1]) + output[0]*sin(rotation[1]),
+                            translation[2] + output[2]*cos(rotation[0]) + output[1]*sin(rotation[0])
+                        ]
+                        ds.append(self.convert(self.t3d_to_2d(new_output) , 1))
                 
                 polygons.append(ds)
                 y += dv
@@ -546,7 +533,7 @@ class Scense3D:
                 ds = []
                 for i in range(0, 2):
                     for j in range(0 + 1*i, 2 - 3*i, 1 -2*i):
-                        ds.append(self.convert(self.coord3d2d([x + i*dx, y + j*dy, func(x + i*dx, y + j*dy)]) , 1))
+                        ds.append(self.convert(self.t3d_to_2d([x + i*dx, y + j*dy, func(x + i*dx, y + j*dy)]) , 1))
                 
                 polygons.append(ds)
                 y += dy
@@ -563,15 +550,15 @@ class Scense3D:
         while time <= t_max:
             dxyz = func(new_c)
             if len(point_list) == 0:
-                point_list.append(self.convert(self.coord3d2d(new_c), 1))
+                point_list.append(self.convert(self.t3d_to_2d(new_c), 1))
 
             for i in range(0, 3):
                 new_c[i] += dxyz[i] * dt
 
-            point_list.append(self.convert(self.coord3d2d(new_c), 1))
+            point_list.append(self.convert(self.t3d_to_2d(new_c), 1))
             time += dt
 
-        pygame.draw.circle(screen, color, [round(axie) for axie in self.convert(self.coord3d2d(new_c), 1)], 4)
+        pygame.draw.circle(screen, color, [round(axie) for axie in self.convert(self.t3d_to_2d(new_c), 1)], 4)
         pygame.draw.lines(screen, color, False, point_list, 3)
   
 def complex_conjectures(a, b, sum_length):
