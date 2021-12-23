@@ -4,7 +4,7 @@ from pygame.locals import *
 
 CONFIG = {'screen_width': 800, 'screen_height': 600}
 viewer = Viewer(CONFIG)
-grafic = GraficScene(viewer, [300, 300], 50, 50)
+grafic = Graph(viewer, [300, 300], 50, 50, 10, 10)
 tools3D = Scense3D(10, 0, 0, viewer)
 
 time = 0
@@ -22,7 +22,10 @@ def scene():
     tools3D.vector((-2, -2, 3), (255, 0, 0))
     tools3D.vector_field(vect_field, [-6, 6, -6, 6,-6, 6], 4)
     time += 0.01
+
+def minigrath_test():
+    grafic.cartesian_plane()
     
-viewer.set_slides([scene])
+viewer.set_slides([minigrath_test])
 viewer.init()
 

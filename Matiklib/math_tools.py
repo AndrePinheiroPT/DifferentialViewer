@@ -79,9 +79,11 @@ class Viewer():
             self.time += 0.1
             pygame.display.update()
 
-class GraficScene:
-    def __init__(self, viewer, origin_coords, unit_x, unit_y, x_label='X', y_label='Y'):
+class Graph:
+    def __init__(self, viewer, origin_coords, width, height, unit_x, unit_y, x_label='X', y_label='Y'):
         self.origin_coords = origin_coords
+        self.width = width
+        self.height = height
         self.unit_x = unit_x
         self.unit_y = unit_y
         self.x_label = x_label
@@ -123,22 +125,22 @@ class GraficScene:
         else:
             return [(coords[0] - self.origin_coords[0])/self.unit_y,-(coords[1] - self.origin_coords[1])/self.unit_y]
 
-    def cartesian_plane(self, move_grid=True):
+    def cartesian_plane(self, move_grid=True, global_space=False):
         if move_grid and self.object_selected == None:
             self.check_mouse()
 
         x = self.origin_coords[0]
         x_value = 0
-        while x <= CONFIG['screen_width']:
-            pygame.draw.line(screen, CYAN, (x, 0), (x, CONFIG['screen_height']), 1)
+        while x <= (CONFIG['screen_width'] if global_space else self.width/2): 
+            pygame.draw.line(screen, CYAN, (x, (0 if global_space else self.origin_coords[1] - self.height/2)), (x, (CONFIG['screen_height'] if global_space else self.origin_coords[1] + self.height/2)), 1)
             screen.blit(font.render(f'{x_value:.1f}', False, WHITE), (x + 2 , self.origin_coords[1]))
             x += self.unit_x
             x_value += 1
             
         x = self.origin_coords[0]
         x_value = 0
-        while x >= 0:
-            pygame.draw.line(screen, CYAN, (x, 0), (x, CONFIG['screen_height']), 1)
+        while x >= (0 if global_space else self.origin_coords[0] - self.width/2):
+            pygame.draw.line(screen, CYAN, (x, (0 if global_space else self.origin_coords[1] - self.height/2)), (x, (CONFIG['screen_height'] if global_space else self.origin_coords[1] + self.height/2)), 1)
             screen.blit(font.render(f'{x_value:.1f}', False, WHITE), (x + 2 , self.origin_coords[1]))
             x -= self.unit_x
             x_value -= 1
