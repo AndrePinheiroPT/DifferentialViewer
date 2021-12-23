@@ -1,10 +1,10 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='DifferentialViewerlib',
-    packages=find_packages(include=['DifferentialViewerlib']),
+    name='Matiklib',
+    packages=find_packages(include=['Matiklib']),
     version='0.1.0',
-    description='Math Calculator',
+    description='Math library',
     author='André Pinheiro',
     license='MIT',
     install_requires=[],
