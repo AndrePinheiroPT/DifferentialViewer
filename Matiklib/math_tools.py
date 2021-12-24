@@ -82,6 +82,7 @@ class Viewer():
 class Graph:
     def __init__(self, viewer, origin_coords, width, height, unit_x, unit_y, x_label='X', y_label='Y'):
         self.origin_coords = origin_coords
+        self.fixed_origin_point = self.origin_coords.copy()
         self.width = width
         self.height = height
         self.unit_x = unit_x
@@ -129,44 +130,51 @@ class Graph:
         if move_grid and self.object_selected == None:
             self.check_mouse()
 
+        x_boundary = [self.fixed_origin_point[0] - self.width/2, self.fixed_origin_point[0] + self.width/2]
+        y_boundary = [self.fixed_origin_point[1] - self.height/2, self.fixed_origin_point[1] + self.height/2]
+
         x = self.origin_coords[0]
         x_value = 0
-        while x <= (CONFIG['screen_width'] if global_space else self.width/2): 
-            pygame.draw.line(screen, CYAN, (x, (0 if global_space else self.origin_coords[1] - self.height/2)), (x, (CONFIG['screen_height'] if global_space else self.origin_coords[1] + self.height/2)), 1)
-            screen.blit(font.render(f'{x_value:.1f}', False, WHITE), (x + 2 , self.origin_coords[1]))
+        while x <= (CONFIG['screen_width'] if global_space else x_boundary[1]): 
+            if x >= x_boundary[0] and not global_space:
+                pygame.draw.line(screen, CYAN, (x, (0 if global_space else y_boundary[0])), (x, (CONFIG['screen_height'] if global_space else y_boundary[1])), 1)
+                screen.blit(font.render(f'{x_value:.1f}', False, WHITE), (x + 2 , self.origin_coords[1]))
             x += self.unit_x
             x_value += 1
             
         x = self.origin_coords[0]
         x_value = 0
-        while x >= (0 if global_space else self.origin_coords[0] - self.width/2):
-            pygame.draw.line(screen, CYAN, (x, (0 if global_space else self.origin_coords[1] - self.height/2)), (x, (CONFIG['screen_height'] if global_space else self.origin_coords[1] + self.height/2)), 1)
-            screen.blit(font.render(f'{x_value:.1f}', False, WHITE), (x + 2 , self.origin_coords[1]))
+        while x >= (0 if global_space else x_boundary[0]):
+            if x <= x_boundary[1] and not global_space:
+                pygame.draw.line(screen, CYAN, (x, (0 if global_space else y_boundary[0])), (x, (CONFIG['screen_height'] if global_space else y_boundary[1])), 1)
+                screen.blit(font.render(f'{x_value:.1f}', False, WHITE), (x + 2 , self.origin_coords[1]))
             x -= self.unit_x
             x_value -= 1
 
         y = self.origin_coords[1]
         y_value = 0
-        while y <= CONFIG['screen_height']:
-            pygame.draw.line(screen, CYAN, (0, y), (CONFIG['screen_width'], y), 1)
-            if y_value != 0:
-                screen.blit(font.render(f'{y_value:.1f}', False, WHITE), (self.origin_coords[0]+2, y-14))
+        while y <= (CONFIG['screen_height'] if global_space else y_boundary[1]):
+            if y >= y_boundary[0] and not global_space:
+                pygame.draw.line(screen, CYAN, ((0 if global_space else x_boundary[0]), y), ((CONFIG['screen_width'] if global_space else x_boundary[1]), y), 1)
+                if y_value != 0:
+                    screen.blit(font.render(f'{y_value:.1f}', False, WHITE), (self.origin_coords[0]+2, y-14))
             y += self.unit_y
             y_value -= 1
 
         y = self.origin_coords[1]
         y_value = 0
-        while y >= 0:
-            pygame.draw.line(screen, CYAN, (0, y), (CONFIG['screen_width'], y), 1)
-            if y_value != 0:
-                screen.blit(font.render(f'{y_value:.1f}', False, WHITE), (self.origin_coords[0]+2, y-14))
+        while y >= (0 if global_space else y_boundary[0]):
+            if y <= y_boundary[1] and not global_space:
+                pygame.draw.line(screen, CYAN, ((0 if global_space else x_boundary[0]), y), ((CONFIG['screen_width'] if global_space else x_boundary[1]), y), 1)
+                if y_value != 0:
+                    screen.blit(font.render(f'{y_value:.1f}', False, WHITE), (self.origin_coords[0]+2, y-14))
             y -= self.unit_y
             y_value += 1
         
-        screen.blit(font.render(f'{self.x_label}', False, WHITE), (CONFIG['screen_width']-10, self.origin_coords[1]-14))
-        screen.blit(font.render(f'{self.y_label}', False, WHITE), (self.origin_coords[0]-12, 0))
-        pygame.draw.line(screen, WHITE, (self.origin_coords[0], 0), (self.origin_coords[0], CONFIG['screen_height']), 1)
-        pygame.draw.line(screen, WHITE, (0, self.origin_coords[1]), (CONFIG['screen_width'], self.origin_coords[1]), 1)
+        screen.blit(font.render(f'{self.x_label}', False, WHITE), ((CONFIG['screen_width'] if global_space else x_boundary[1])-10, self.origin_coords[1]-14))
+        screen.blit(font.render(f'{self.y_label}', False, WHITE), (self.origin_coords[0]-12, (0 if global_space else y_boundary[0])))
+        pygame.draw.line(screen, WHITE, (self.origin_coords[0], (0 if global_space else y_boundary[0])), (self.origin_coords[0], (CONFIG['screen_height'] if global_space else y_boundary[1])), 1)
+        pygame.draw.line(screen, WHITE, ((0 if global_space else x_boundary[0]), self.origin_coords[1]), ((CONFIG['screen_width'] if global_space else x_boundary[1]), self.origin_coords[1]), 1)
 
     def linear_transformation(self, matrix):
         alpha = CONFIG['screen_width']/(0.001 if matrix[0][0] == 0 else matrix[0][0])

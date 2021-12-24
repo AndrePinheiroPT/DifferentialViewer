@@ -4,7 +4,7 @@ from pygame.locals import *
 
 CONFIG = {'screen_width': 800, 'screen_height': 600}
 viewer = Viewer(CONFIG)
-grafic = Graph(viewer, [300, 300], 50, 50, 10, 10)
+grafic = Graph(viewer, [300, 300], 200, 200, 50, 50)
 tools3D = Scense3D(10, 0, 0, viewer)
 
 time = 0
@@ -24,7 +24,8 @@ def scene():
     time += 0.01
 
 def minigrath_test():
-    grafic.cartesian_plane()
+    grafic.cartesian_plane(global_space=True)
+    grafic.real_functions(lambda x: -x**2, -4, 4)
     
 viewer.set_slides([minigrath_test])
 viewer.init()
