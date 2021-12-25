@@ -24,7 +24,7 @@ def scene():
     time += 0.01
 
 def minigrath_test():
-    grafic.cartesian_plane(global_space=True)
+    grafic.cartesian_plane()
     grafic.real_functions(lambda x: -x**2, -4, 4)
     
 viewer.set_slides([minigrath_test])
