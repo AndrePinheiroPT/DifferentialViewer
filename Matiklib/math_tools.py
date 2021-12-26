@@ -202,17 +202,27 @@ class Graph:
     
     def real_functions(self, function, xd_min, xd_max, dx=0.01, color=(255, 255, 0)):
         x = xd_min if xd_min <= xd_max else xd_max
+        xv_boundary = [self.convert_coords((self.x_boundary[i], 0), 0)[0] for i in range(0, 2)]
+        yv_boundary = [self.convert_coords((0, self.y_boundary[i]), 0)[1] for i in range(1, -1, -1)]
+        
         function_points = []
+        branch = []
 
-        function_points.append(self.convert_coords((x, function(x)), 1))
-        while x <= (xd_max if xd_min < xd_max else xd_min):
+        x = xv_boundary[0] if x < xv_boundary[0] else x
+        x_max = xd_max if xd_min < xd_max else xd_min
+        while x <= (xv_boundary[1] if x_max > xv_boundary[1] else x_max):
             x += dx
             y = function(x)
+            if yv_boundary[0] <= y <= yv_boundary[1]:
+                branch.append(self.convert_coords((x, y), 1))
+            else:
+                function_points.append(branch.copy)
+                branch = []
 
-            function_points.append(self.convert_coords((x, y), 1))
-
-        if len(function_points) >= 2:
-            pygame.draw.lines(screen, color, False, function_points, 3)
+        print(function_points)
+        for branch in function_points:
+            pygame.draw.lines(screen, color, False, branch, 3)
+        
 
     def complex_functions(self, func, domain_func, t_min, t_max, dt=0.01, color=(255, 255, 0)):
         complex_function_points = []

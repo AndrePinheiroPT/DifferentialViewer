@@ -25,7 +25,7 @@ def scene():
 
 def minigrath_test():
     grafic.cartesian_plane()
-    grafic.real_functions(lambda x: -x**2, -4, 4)
+    grafic.real_functions(lambda x: sin(x), -4, 4)
     
 viewer.set_slides([minigrath_test])
 viewer.init()
