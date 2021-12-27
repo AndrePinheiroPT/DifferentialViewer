@@ -24,6 +24,7 @@ font = None
 class Viewer():
     def __init__(self, config):
         self.mouse_pressed = False
+        self.surfaces = []
         self.slide_index = 0
         self.slides = []
         self.mouse_state = []
@@ -55,6 +56,9 @@ class Viewer():
         while True:
             clock.tick(100)
             screen.fill((0, 0, 0))
+            for surf in self.surfaces:
+                surf[0].fill((0, 0, 0))
+                screen.blit(*surf)
             self.mouse_state = pygame.mouse.get_pos()
             
             self.slides[self.slide_index]()
@@ -77,38 +81,44 @@ class Viewer():
                     self.mouse_pressed = False
 
             self.time += 0.1
+            for surf in self.surfaces:
+                screen.blit(*surf)
+            
             pygame.display.update()
+            pygame.display.flip()
 
 class Graph:
-    def __init__(self, viewer, origin_coords, width, height, unit_x, unit_y, x_label='X', y_label='Y'):
-        self.origin_coords = origin_coords
-        self.fixed_origin_point = self.origin_coords.copy()
+    def __init__(self, viewer, coords, width, height, unit_x, unit_y, x_label='X', y_label='Y'):
+        self.surface = pygame.Surface([width, height])
+        self.viewer = viewer
+        self.viewer.surfaces.append([self.surface, coords])
+
+        self.coords = coords
         self.width = width
         self.height = height
-        self.x_boundary = [self.fixed_origin_point[0] - self.width/2, self.fixed_origin_point[0] + self.width/2]
-        self.y_boundary = [self.fixed_origin_point[1] - self.height/2, self.fixed_origin_point[1] + self.height/2]
-
         self.unit_x = unit_x
         self.unit_y = unit_y
         self.x_label = x_label
         self.y_label = y_label
+
         self.prev_state = None
         self.object_selected = None
-        self.viewer = viewer
+        
+        self.origin = [self.width/2, self.height/2]      
 
     def check_mouse(self):
         mouse_state = pygame.mouse.get_pos()
         
         if self.viewer.mouse_pressed:
-            if self.x_boundary[0] <= mouse_state[0] <= self.x_boundary[1] and self.y_boundary[0] <= mouse_state[1] <= self.y_boundary[1]:
+            if self.coords[0] <= mouse_state[0] <= self.coords[0] + self.width and self.coords[1] <= mouse_state[1] <= self.coords[1] + self.height:
                 if self.prev_state == None:
                     self.prev_state = mouse_state
-                self.origin_coords[0] += -(self.prev_state[0] - mouse_state[0])*.5
-                self.origin_coords[1] += -(self.prev_state[1] - mouse_state[1])*.5
+                self.origin[0] += -(self.prev_state[0] - mouse_state[0])*.5
+                self.origin[1] += -(self.prev_state[1] - mouse_state[1])*.5
                 self.prev_state = mouse_state
         else:
             self.prev_state = None
-
+    # needs test
     def manipulation_points(self, points_list, hitbox):
         points = points_list
         if self.object_selected == None:
@@ -126,103 +136,82 @@ class Graph:
 
     def convert_coords(self, coords, standard):
         if standard:
-            return [coords[0]*self.unit_x + self.origin_coords[0], -coords[1]*self.unit_x + self.origin_coords[1]]
+            return [coords[0]*self.unit_x + self.origin[0], -coords[1]*self.unit_x + self.origin[1]]
         else:
-            return [(coords[0] - self.origin_coords[0])/self.unit_y,-(coords[1] - self.origin_coords[1])/self.unit_y]
+            return [(coords[0] - self.origin[0])/self.unit_y,-(coords[1] - self.origin[1])/self.unit_y]
 
     def cartesian_plane(self, move_grid=True):
         if move_grid and self.object_selected == None:
             self.check_mouse()
 
-        x = self.origin_coords[0]
+        x = self.origin[0]
         x_value = 0
-        while x <= self.x_boundary[1]: 
-            if x >= self.x_boundary[0]:
-                pygame.draw.line(screen, CYAN, (x, self.y_boundary[0]), (x, self.y_boundary[1]), 1)
-                if self.y_boundary[0] <= self.origin_coords[1] <= self.y_boundary[1]:
-                    screen.blit(font.render(f'{x_value:.1f}', False, WHITE), (x + 2 , self.origin_coords[1]))
+        while x <= self.width: 
+            pygame.draw.line(self.surface, CYAN, (x, 0), (x, self.height), 1)
+            self.surface.blit(font.render(f'{x_value:.1f}', False, WHITE), (x + 2 , self.origin[1]))
             x += self.unit_x
             x_value += 1
             
-        x = self.origin_coords[0]
+        x = self.origin[0]
         x_value = 0
-        while x >= self.x_boundary[0]:
-            if x <= self.x_boundary[1]:
-                pygame.draw.line(screen, CYAN, (x, self.y_boundary[0]), (x, self.y_boundary[1]), 1)
-                if self.y_boundary[0] <= self.origin_coords[1] <= self.y_boundary[1]:
-                    screen.blit(font.render(f'{x_value:.1f}', False, WHITE), (x + 2 , self.origin_coords[1]))
+        while x >= 0:
+            pygame.draw.line(self.surface, CYAN, (x, 0), (x, self.height), 1)
+            self.surface.blit(font.render(f'{x_value:.1f}', False, WHITE), (x + 2 , self.origin[1]))
             x -= self.unit_x
             x_value -= 1
 
-        y = self.origin_coords[1]
+        y = self.origin[1]
         y_value = 0
-        while y <= self.y_boundary[1]:
-            if y >= self.y_boundary[0]:
-                pygame.draw.line(screen, CYAN, (self.x_boundary[0], y), (self.x_boundary[1], y), 1)
-                if y_value != 0:
-                    if self.x_boundary[0] <= self.origin_coords[0] <= self.x_boundary[1]:
-                        screen.blit(font.render(f'{y_value:.1f}', False, WHITE), (self.origin_coords[0]+2, y-14))
+        while y <= self.height:
+            pygame.draw.line(self.surface, CYAN, (0, y), (self.width, y), 1)
+            if y_value != 0:
+                self.surface.blit(font.render(f'{y_value:.1f}', False, WHITE), (self.origin[0]+2, y-14))
             y += self.unit_y
             y_value -= 1
 
-        y = self.origin_coords[1]
+        y = self.origin[1]
         y_value = 0
-        while y >= self.y_boundary[0]:
-            if y <= self.y_boundary[1]:
-                pygame.draw.line(screen, CYAN, (self.x_boundary[0], y), (self.x_boundary[1], y), 1)
-                if y_value != 0:
-                    if self.x_boundary[0] <= self.origin_coords[0] <= self.x_boundary[1]:
-                        screen.blit(font.render(f'{y_value:.1f}', False, WHITE), (self.origin_coords[0]+2, y-14))
+        while y >= 0:
+            pygame.draw.line(self.surface, CYAN, (0, y), (self.width, y), 1)
+            if y_value != 0:
+                self.surface.blit(font.render(f'{y_value:.1f}', False, WHITE), (self.origin[0]+2, y-14))
             y -= self.unit_y
             y_value += 1
         
-        if (self.x_boundary[0] <= self.origin_coords[0] <= self.x_boundary[1] and self.y_boundary[0] <= self.origin_coords[1] <= self.y_boundary[1]): 
-            screen.blit(font.render(f'{self.x_label}', False, WHITE), (self.x_boundary[1]-10, self.origin_coords[1]-14))
-            screen.blit(font.render(f'{self.y_label}', False, WHITE), (self.origin_coords[0]-12, self.y_boundary[0]))
-            pygame.draw.line(screen, WHITE, (self.origin_coords[0], self.y_boundary[0]), (self.origin_coords[0], self.y_boundary[1]), 1)
-            pygame.draw.line(screen, WHITE, (self.x_boundary[0], self.origin_coords[1]), (self.x_boundary[1], self.origin_coords[1]), 1)
-
+        self.surface.blit(font.render(f'{self.x_label}', False, WHITE), (self.width-10, self.origin[1]-14))
+        self.surface.blit(font.render(f'{self.y_label}', False, WHITE), (self.origin[0]-12, 0))
+        pygame.draw.line(self.surface, WHITE, (self.origin[0], 0), (self.origin[0], self.height), 1)
+        pygame.draw.line(self.surface, WHITE, (0, self.origin[1]), (self.width, self.origin[1]), 1)
+    # needs to be fixed
     def linear_transformation(self, matrix):
-        alpha = CONFIG['screen_width']/(0.001 if matrix[0][0] == 0 else matrix[0][0])
-        beta = CONFIG['screen_height']/(0.001 if matrix[1][1] == 0 else matrix[1][1])
+        alpha = self.width/(0.001 if matrix[0][0] == 0 else matrix[0][0])
+        beta = self.height/(0.001 if matrix[1][1] == 0 else matrix[1][1])
 
         n = -10
         while n <= 10:
-            pygame.draw.line(screen, YELLOW, 
+            pygame.draw.line(self.surface, YELLOW, 
             self.convert_coords((-beta*matrix[0][1] + n*matrix[0][0], -beta*matrix[1][1] + n*matrix[1][0]), 1), 
             self.convert_coords((beta*matrix[0][1] + n*matrix[0][0], beta*matrix[1][1] + n*matrix[1][0]), 1))
             n += 1
 
         n = -10
         while n <= 10:
-            pygame.draw.line(screen, YELLOW, 
+            pygame.draw.line(self.surface, YELLOW, 
             self.convert_coords((-alpha*matrix[0][0] + n*matrix[0][1], -alpha*matrix[1][0] + n*matrix[1][1]), 1), 
             self.convert_coords((alpha*matrix[0][0] + n*matrix[0][1], alpha*matrix[1][0] + n*matrix[1][1]), 1))
             n += 1
     
     def real_functions(self, function, xd_min, xd_max, dx=0.01, color=(255, 255, 0)):
         x = xd_min if xd_min <= xd_max else xd_max
-        xv_boundary = [self.convert_coords((self.x_boundary[i], 0), 0)[0] for i in range(0, 2)]
-        yv_boundary = [self.convert_coords((0, self.y_boundary[i]), 0)[1] for i in range(1, -1, -1)]
-        
         function_points = []
-        branch = []
-
-        x = xv_boundary[0] if x < xv_boundary[0] else x
-        x_max = xd_max if xd_min < xd_max else xd_min
-        while x <= (xv_boundary[1] if x_max > xv_boundary[1] else x_max):
+        function_points.append(self.convert_coords((x, function(x)), 1))
+        while x <= (xd_max if xd_min < xd_max else xd_min):
             x += dx
             y = function(x)
-            if yv_boundary[0] <= y <= yv_boundary[1]:
-                branch.append(self.convert_coords((x, y), 1))
-            else:
-                function_points.append(branch.copy)
-                branch = []
+            function_points.append(self.convert_coords((x, y), 1))
 
-        print(function_points)
-        for branch in function_points:
-            pygame.draw.lines(screen, color, False, branch, 3)
-        
+        if len(function_points) >= 2:
+            pygame.draw.lines(self.surface, color, False, function_points, 3)
 
     def complex_functions(self, func, domain_func, t_min, t_max, dt=0.01, color=(255, 255, 0)):
         complex_function_points = []
@@ -238,8 +227,8 @@ class Graph:
             complex_function_points.append(self.convert_coords((z[0], z[1]), 1))
 
         if len(complex_function_points) >= 2:
-            pygame.draw.lines(screen, color, False, complex_function_points, 2)
-    
+            pygame.draw.lines(self.surface, color, False, complex_function_points, 2)
+
     def derivative_line(self, func, x, range_line, h=0.0001, color=(230, 0, 85)):
         derivative = 0
 
@@ -247,16 +236,13 @@ class Graph:
         b = func(x) - derivative*x
 
         x_range = range_line/(1+derivative**2)**0.5
-        pygame.draw.line(screen, color, 
+        pygame.draw.line(self.surface, color, 
         self.convert_coords((x - x_range, (x - x_range)*derivative + b), 1), 
         self.convert_coords((x + x_range, (x + x_range)*derivative + b), 1), 3)
             
         return derivative
 
     def riemann_rectangles(self, func, x_min, x_max, n, color_init=[131, 47, 0, 200], color_end=[231, 242, 0, 200]):
-        reason_x = (self.convert_coords((CONFIG['x_max'], CONFIG['y_max']), 1)[0] - self.convert_coords((0, 0), 1)[0]) / CONFIG['x_max']
-        reason_y = (self.convert_coords((CONFIG['x_max'], CONFIG['y_max']), 1)[1] - self.convert_coords((0, 0), 1)[1]) / CONFIG['y_max']
-
         color = [0, 0, 0, 0]
         d_color = [0, 0, 0, 0]
         for k in range(0, 4):
@@ -267,31 +253,28 @@ class Graph:
         for i in range(0, n):
             for k in range(0, 4):
                 color[k] = color_init[k] + d_color[k]*i
-
             x = x_min + i*dx
             dy = func(x)
-
             total_sum += dy*dx
-
-            pygame.gfxdraw.box(screen, pygame.Rect(self.convert_coords((x, func(x)), 1), (dx * reason_x, -dy * reason_y + 1)), color)
+            pygame.gfxdraw.box(self.surface, pygame.Rect(self.convert_coords((x, func(x)), 1), (dx*self.unit_x + 1, dy*self.unit_y + 2)), color)
 
         return total_sum
 
-    def limit_aproximation(self, func, h, delta, r=True, color=(255, 255, 0)):
-        self.real_functions(func, h - delta, h + delta)
-        standard_limit = self.convert_coords((h, func(h)), 1)
+    def limit_aproximation(self, func, x, delta, color=(255, 255, 0)):
+        self.real_functions(func, x - delta, x + delta, color=color)
+        standard_limit = self.convert_coords((x, func(x)), 1)
         for i in range(0, 2):
             standard_limit[i] = round(standard_limit[i])
-        pygame.draw.circle(screen, color, standard_limit, 4)
+        pygame.draw.circle(self.surface, color, standard_limit, 4)
 
-        return func(h + delta if r else h - delta)
+        return [func(x - delta), func(x + delta)]
 
     def latex_text(self, formula, name_file, position=None, dpi=150):
         obj = BytesIO()
         preview(rf'$${formula}$$', filename='{}.png'.format(name_file), euler=False, outputbuffer=obj, viewer='BytesIO', dvioptions=["-T", "tight", "-z", "0", "--truecolor", f"-D {dpi}", "-bg", "Transparent", "-fg", "White"])
         obj.seek(0)
         formula = pygame.image.load(obj)
-        screen.blit(formula, self.convert_coords(position, 1))
+        self.surface.blit(formula, self.convert_coords(position, 1))
 
     def parametric_functions(self, func, t_min, t_max, color=(255, 255, 0), dt=0.01):
         point_list = []
@@ -302,7 +285,7 @@ class Graph:
             point_list.append(self.convert_coords(func(t), 1))
             t += dt
         
-        pygame.draw.lines(screen, color, False, point_list, 3)
+        pygame.draw.lines(self.surface, color, False, point_list, 3)
 
     def bazier_curve(self, points_list, t_max, color=(255, 255, 0), dt=0.01):
         bezier_points = []
@@ -321,25 +304,25 @@ class Graph:
             bezier_points.append(self.convert_coords(points[0], 1))
             t += dt
         
-        pygame.draw.lines(screen, color, False, bezier_points, 3)
+        pygame.draw.lines(self.surface, color, False, bezier_points, 3)
         
     def line(self, init_point, end_point, color=(255, 255, 0), stroke=1):
-        pygame.draw.line(screen, color, self.convert_coords(init_point, 1), self.convert_coords(end_point, 1), stroke)
+        pygame.draw.line(self.surface, color, self.convert_coords(init_point, 1), self.convert_coords(end_point, 1), stroke)
 
     def dot(self, coords, color=(255, 255, 0)):
         integer_coords = [round(self.convert_coords(coords, 1)[0]), round(self.convert_coords(coords, 1)[1])]
-        pygame.draw.circle(screen, color, integer_coords, 5)
+        pygame.draw.circle(self.surface, color, integer_coords, 5)
 
     def circle(self, coords, radius, color=(255, 255, 0), stroke=0):
         integer_coords = [round(self.convert_coords(coords, 1)[0]), round(self.convert_coords(coords, 1)[1])]
-        pygame.draw.circle(screen, color, integer_coords, radius, stroke)
+        pygame.draw.circle(self.surface, color, integer_coords, radius, stroke)
 
     def polygon(self, points_list, color=(255, 255, 0), stroke=0):
         standard_points = []
         for point in points_list:
             standard_points.append(self.convert_coords(point, 1))
         
-        pygame.draw.polygon(screen, color, standard_points, stroke)
+        pygame.draw.polygon(self.surface, color, standard_points, stroke)
 
     def vector(self, vect, color, origin=[0, 0], stroke=4, angle=pi/7):
         vector_length = 0.001 if sqrt(vect[0]**2 + vect[1]**2) == 0 else sqrt(vect[0]**2 + vect[1]**2)
@@ -355,8 +338,8 @@ class Graph:
         x_component = origin[0] + vect[0]
         y_component = origin[1] + vect[1]
         triangle = [self.convert_coords((x_component, y_component), 1), self.convert_coords((x_component + branch1[0], y_component + branch1[1]), 1), self.convert_coords((x_component + branch2[0], y_component + branch2[1]), 1)]
-        pygame.draw.line(screen, color, self.convert_coords((origin[0], origin[1]), 1), self.convert_coords((x_component, y_component), 1), stroke)
-        pygame.gfxdraw.filled_polygon(screen, triangle, color)
+        pygame.draw.line(self.surface, color, self.convert_coords((origin[0], origin[1]), 1), self.convert_coords((x_component, y_component), 1), stroke)
+        pygame.gfxdraw.filled_polygon(self.surface, triangle, color)
 
     def __vector_render(self, vect_func, x, y):
         

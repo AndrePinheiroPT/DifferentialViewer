@@ -4,7 +4,7 @@ from pygame.locals import *
 
 CONFIG = {'screen_width': 800, 'screen_height': 600}
 viewer = Viewer(CONFIG)
-grafic = Graph(viewer, [300, 300], 200, 200, 50, 50)
+grafic = Graph(viewer, [100, 100], 200, 200, 50, 50)
 tools3D = Scense3D(10, 0, 0, viewer)
 
 time = 0
@@ -26,7 +26,11 @@ def scene():
 def minigrath_test():
     grafic.cartesian_plane()
     grafic.real_functions(lambda x: sin(x), -4, 4)
-    
+    grafic.derivative_line(lambda x: sin(x), pi/4, 3)
+    grafic.riemann_rectangles(lambda x: sin(x), 0, pi, 5)
+    grafic.limit_aproximation(lambda x: sin(x), -pi/2, 0.5, (255, 0, 0))
+    grafic.linear_transformation([[1, 1], [1, 1]])
+
 viewer.set_slides([minigrath_test])
 viewer.init()
 
