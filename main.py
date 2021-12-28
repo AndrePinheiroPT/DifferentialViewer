@@ -29,7 +29,7 @@ def minigrath_test():
     grafic.derivative_line(lambda x: sin(x), pi/4, 3)
     grafic.riemann_rectangles(lambda x: sin(x), 0, pi, 5)
     grafic.limit_aproximation(lambda x: sin(x), -pi/2, 0.5, (255, 0, 0))
-    grafic.linear_transformation([[1, 1], [1, 1]])
+    grafic.linear_transformation([[2, 1], [1, 2]])
 
 viewer.set_slides([minigrath_test])
 viewer.init()

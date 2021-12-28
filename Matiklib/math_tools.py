@@ -184,22 +184,23 @@ class Graph:
         pygame.draw.line(self.surface, WHITE, (0, self.origin[1]), (self.width, self.origin[1]), 1)
     # needs to be fixed
     def linear_transformation(self, matrix):
-        alpha = self.width/(0.001 if matrix[0][0] == 0 else matrix[0][0])
-        beta = self.height/(0.001 if matrix[1][1] == 0 else matrix[1][1])
+        # [[4, 7]
+        #  [1, 2]]
+        alpha = matrix[1][0]/(0.001 if matrix[0][0] == 0 else matrix[0][0])
+        beta = matrix[1][1]/(0.001 if matrix[0][1] == 0 else matrix[0][1])
 
-        n = -10
-        while n <= 10:
-            pygame.draw.line(self.surface, YELLOW, 
-            self.convert_coords((-beta*matrix[0][1] + n*matrix[0][0], -beta*matrix[1][1] + n*matrix[1][0]), 1), 
-            self.convert_coords((beta*matrix[0][1] + n*matrix[0][0], beta*matrix[1][1] + n*matrix[1][0]), 1))
-            n += 1
+        x = self.origin[0]
+        while x <= self.width: 
+            pygame.draw.line(self.surface, CYAN, ((x - self.height - self.origin[1])/alpha, self.height), (x + self.origin[1]/alpha, 0), 1)
+            x += self.unit_x
+            
+        x = self.origin[0]
+        while x >= 0:
+            pygame.draw.line(self.surface, CYAN, ((x - self.height - self.origin[1])/alpha, self.height), (x + self.origin[1]/alpha, 0), 1)
+            x -= self.unit_x
 
-        n = -10
-        while n <= 10:
-            pygame.draw.line(self.surface, YELLOW, 
-            self.convert_coords((-alpha*matrix[0][0] + n*matrix[0][1], -alpha*matrix[1][0] + n*matrix[1][1]), 1), 
-            self.convert_coords((alpha*matrix[0][0] + n*matrix[0][1], alpha*matrix[1][0] + n*matrix[1][1]), 1))
-            n += 1
+        
+
     
     def real_functions(self, function, xd_min, xd_max, dx=0.01, color=(255, 255, 0)):
         x = xd_min if xd_min <= xd_max else xd_max
