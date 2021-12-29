@@ -118,7 +118,7 @@ class Graph:
                 self.prev_state = mouse_state
         else:
             self.prev_state = None
-    # needs test
+
     def manipulation_points(self, points_list, hitbox):
         points = points_list
         if self.object_selected == None:
@@ -148,7 +148,7 @@ class Graph:
         x_value = 0
         while x <= self.width: 
             pygame.draw.line(self.surface, CYAN, (x, 0), (x, self.height), 1)
-            self.surface.blit(font.render(f'{x_value:.1f}', False, WHITE), (x + 2 , self.origin[1]))
+            self.surface.blit(font.render(f'{x_value}', False, WHITE), (x + 2 , self.origin[1]))
             x += self.unit_x
             x_value += 1
             
@@ -156,7 +156,7 @@ class Graph:
         x_value = 0
         while x >= 0:
             pygame.draw.line(self.surface, CYAN, (x, 0), (x, self.height), 1)
-            self.surface.blit(font.render(f'{x_value:.1f}', False, WHITE), (x + 2 , self.origin[1]))
+            self.surface.blit(font.render(f'{x_value}', False, WHITE), (x + 2 , self.origin[1]))
             x -= self.unit_x
             x_value -= 1
 
@@ -165,7 +165,7 @@ class Graph:
         while y <= self.height:
             pygame.draw.line(self.surface, CYAN, (0, y), (self.width, y), 1)
             if y_value != 0:
-                self.surface.blit(font.render(f'{y_value:.1f}', False, WHITE), (self.origin[0]+2, y-14))
+                self.surface.blit(font.render(f'{y_value}', False, WHITE), (self.origin[0]+2, y-14))
             y += self.unit_y
             y_value -= 1
 
@@ -182,26 +182,23 @@ class Graph:
         self.surface.blit(font.render(f'{self.y_label}', False, WHITE), (self.origin[0]-12, 0))
         pygame.draw.line(self.surface, WHITE, (self.origin[0], 0), (self.origin[0], self.height), 1)
         pygame.draw.line(self.surface, WHITE, (0, self.origin[1]), (self.width, self.origin[1]), 1)
-    # needs to be fixed
+
     def linear_transformation(self, matrix):
-        # [[4, 7]
-        #  [1, 2]]
         alpha = matrix[1][0]/(0.001 if matrix[0][0] == 0 else matrix[0][0])
         beta = matrix[1][1]/(0.001 if matrix[0][1] == 0 else matrix[0][1])
 
         x = self.origin[0]
-        while x <= self.width: 
-            pygame.draw.line(self.surface, CYAN, ((x - self.height - self.origin[1])/alpha, self.height), (x + self.origin[1]/alpha, 0), 1)
+        while x <= self.width + 5*self.unit_x: 
+            pygame.draw.line(self.surface, YELLOW, (x - (self.height - self.origin[1])/alpha, self.height), (x + self.origin[1]/alpha, 0), 1)
+            pygame.draw.line(self.surface, YELLOW, (x - (self.height - self.origin[1])/beta, self.height), (x + self.origin[1]/beta, 0), 1)
             x += self.unit_x
             
         x = self.origin[0]
-        while x >= 0:
-            pygame.draw.line(self.surface, CYAN, ((x - self.height - self.origin[1])/alpha, self.height), (x + self.origin[1]/alpha, 0), 1)
+        while x >= 0 - 5*self.unit_x:
+            pygame.draw.line(self.surface, YELLOW, (x - (self.height - self.origin[1])/alpha, self.height), (x + self.origin[1]/alpha, 0), 1)
+            pygame.draw.line(self.surface, YELLOW, (x - (self.height - self.origin[1])/beta, self.height), (x + self.origin[1]/beta, 0), 1)
             x -= self.unit_x
 
-        
-
-    
     def real_functions(self, function, xd_min, xd_max, dx=0.01, color=(255, 255, 0)):
         x = xd_min if xd_min <= xd_max else xd_max
         function_points = []
@@ -333,8 +330,8 @@ class Graph:
 
         vector_angle = (2*pi - acos(unit_vector[0]) if unit_vector[1] <= 0 else acos(unit_vector[0]))
 
-        branch1 = [0.2*cos(vector_angle - theta), 0.2*sin(vector_angle - theta)]
-        branch2 = [0.2*cos(vector_angle + theta), 0.2*sin(vector_angle + theta)]
+        branch1 = [0.5*cos(vector_angle - theta), 0.5*sin(vector_angle - theta)]
+        branch2 = [0.5*cos(vector_angle + theta), 0.5*sin(vector_angle + theta)]
 
         x_component = origin[0] + vect[0]
         y_component = origin[1] + vect[1]
