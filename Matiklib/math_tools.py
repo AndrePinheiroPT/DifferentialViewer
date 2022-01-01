@@ -1,13 +1,7 @@
 import pygame
 import pygame.gfxdraw
-from sympy import preview
-import os
-import numpy as np
-from PIL import Image
 from pygame.locals import *
 from math import *
-from io import BytesIO 
-import shutil 
 
 CONFIG = {
     'screen_width': 700,
@@ -38,10 +32,6 @@ class Viewer():
         for key, value in kwargs.items():
             CONFIG.update({key: value})
         self.time = 0
-
-        path = os.path.dirname(os.path.realpath(__file__)) + '/img'
-        for f in os.listdir(path):
-            os.remove(os.path.join(path, f))
     
     def set_slides(self, slides):
         self.slides = slides
@@ -54,7 +44,6 @@ class Viewer():
         pygame.init()
 
         screen = pygame.display.set_mode((CONFIG['screen_width'], CONFIG['screen_height']))
-        print(CONFIG)
         pygame.display.set_caption('DifferentialViewer')
         pygame.Surface((CONFIG['screen_width'], CONFIG['screen_height']))
         pygame.font.init()
@@ -326,13 +315,6 @@ class Graph:
 
         return [func(x - delta), func(x + delta)]
 
-    def latex_text(self, formula, name_file, position=None, dpi=150):
-        obj = BytesIO()
-        preview(rf'$${formula}$$', filename='{}.png'.format(name_file), euler=False, outputbuffer=obj, viewer='BytesIO', dvioptions=["-T", "tight", "-z", "0", "--truecolor", f"-D {dpi}", "-bg", "Transparent", "-fg", "WHITE"])
-        obj.seek(0)
-        formula = pygame.image.load(obj)
-        self.surface.blit(formula, self.convert_coords(position, 1))
-
     def parametric_functions(self, func, t_min, t_max, color=YELLOW, dt=0.01, **kwargs):
         config = {
             'stroke': 3
@@ -392,16 +374,26 @@ class Graph:
         integer_coords = [round(self.convert_coords(coords, 1)[0]), round(self.convert_coords(coords, 1)[1])]
         pygame.draw.circle(self.surface, color, integer_coords, 5)
 
-    def circle(self, coords, radius, color=(255, 255, 0), stroke=0):
+    def circle(self, coords, radius, color=(255, 255, 0), **kwargs):
+        config = {
+            'stroke': 3
+        }
+        for key, value in kwargs.items():
+            config.update({key: value})
         integer_coords = [round(self.convert_coords(coords, 1)[0]), round(self.convert_coords(coords, 1)[1])]
-        pygame.draw.circle(self.surface, color, integer_coords, radius, stroke)
+        pygame.draw.circle(self.surface, color, integer_coords, radius, config['stroke'])
 
-    def polygon(self, points_list, color=(255, 255, 0), stroke=0):
+    def polygon(self, points_list, color=(255, 255, 0), **kwargs):
+        config = {
+            'stroke': 3
+        }
+        for key, value in kwargs.items():
+            config.update({key: value})
         standard_points = []
         for point in points_list:
             standard_points.append(self.convert_coords(point, 1))
         
-        pygame.draw.polygon(self.surface, color, standard_points, stroke)
+        pygame.draw.polygon(self.surface, color, standard_points, config['stroke'])
 
     def vector(self, vect, color, origin=[0, 0], **kwargs):
         config = {
@@ -441,11 +433,11 @@ class Graph:
             [h, q, 0]
         ]
 
-    def vector_field(self, vect_func, kwargs={}):
-        x = self.origin_coords[0]
+    def vector_field(self, vect_func, **kwargs):
+        x = self.origin[0]
         x_value = 0
         while x <= CONFIG['screen_width'] + self.unit_x:
-            y = self.origin_coords[1]
+            y = self.origin[1]
             y_value = 0
             while y <= CONFIG['screen_height'] + self.unit_y:
                 if y_value != 0:
@@ -453,7 +445,7 @@ class Graph:
                 y += self.unit_y
                 y_value -= 1
 
-            y = self.origin_coords[1]
+            y = self.origin[1]
             y_value = 0
             while y >= 0 - self.unit_y:
                 self.vector(self.__vector_render(vect_func, x_value, y_value)[:2], self.__vector_render(vect_func, x_value, y_value)[2], (x_value, y_value), **kwargs)
@@ -463,21 +455,21 @@ class Graph:
             x += self.unit_x
             x_value += 1
             
-        x = self.origin_coords[0]
+        x = self.origin[0]
         x_value = 0
         while x >= 0 - self.unit_x:
-            y = self.origin_coords[1]
+            y = self.origin[1]
             y_value = 0
             while y <= CONFIG['screen_height'] + self.unit_y:
                 if y_value != 0:
-                    self.vector(self.__vector_render(vect_func, x_value, y_value)[:2], self.__vector_render(vect_func, x_value, y_value)[2], (x_value, y_value), 2)
+                    self.vector(self.__vector_render(vect_func, x_value, y_value)[:2], self.__vector_render(vect_func, x_value, y_value)[2], (x_value, y_value), **kwargs)
                 y += self.unit_y
                 y_value -= 1
 
-            y = self.origin_coords[1]
+            y = self.origin[1]
             y_value = 0
             while y >= 0 - self.unit_y:
-                self.vector(self.__vector_render(vect_func, x_value, y_value)[:2], self.__vector_render(vect_func, x_value, y_value)[2], (x_value, y_value), 2)
+                self.vector(self.__vector_render(vect_func, x_value, y_value)[:2], self.__vector_render(vect_func, x_value, y_value)[2], (x_value, y_value), **kwargs)
                 y -= self.unit_y
                 y_value += 1
             x -= self.unit_x
@@ -493,10 +485,11 @@ class Scense3D:
         self.viewer = viewer
         self.dxy = [0, 0]
 
+        self.h = 0.5
+        self.r = 0.25
+
     def __cone(self, u, v):
-        r = 0.25
-        h = 0.5
-        return [(r*u/h)*cos(v), (r*u/h)*sin(v), u]
+        return [(self.r*u/self.h)*cos(v), (self.r*u/self.h)*sin(v), u]
 
     def __vector_render(self, vect_func, x, y, z):
         
@@ -528,31 +521,42 @@ class Scense3D:
 
     def convert(self, coords, standard=True):
         if standard:
-            return [CONFIG['screen_width']/2*(coords[0] + 1), CONFIG['screen_height']/2*(1 - coords[1])]
+            return [coords[0]*10 + CONFIG['screen_width']/2, -coords[1]*10 + CONFIG['screen_height']/2]
         else:
-            return [coords[0]*2 / CONFIG['screen_width'] - 1, -coords[1]*2 / CONFIG['screen_height'] + 1]
+            return [(coords[0] - CONFIG['screen_width']/2)/10,-(coords[1] - CONFIG['screen_height']/2)/10]
 
     def check_mouse(self):
         mouse_state = self.convert(pygame.mouse.get_pos(), 0)
         if self.viewer.mouse_pressed:
             if not self.can_change:
                 self.prev_state = mouse_state
-            self.theta = self.dxy[0] + mouse_state[1] - self.prev_state[1]
-            self.phi = self.dxy[1] + mouse_state[0] - self.prev_state[0]
+            self.theta = self.dxy[0] + (mouse_state[1] - self.prev_state[1])*0.10
+            self.phi = self.dxy[1] + (mouse_state[0] - self.prev_state[0])*0.10
             self.can_change = True
         else:
             if self.can_change:
                 self.dxy = [self.theta, self.phi]
             self.can_change = False
             
-    def vector(self, vect, color, origin=(0, 0, 0), stroke=3):
+    def vector(self, vect, color, origin=(0, 0, 0), **kwargs):
+        config = {
+            'stroke': 3,
+            'h': 0.5,
+            'r': 0.25
+        }
+        for key, value in kwargs.items():
+            config.update({key: value})
+
+        self.h = config['h']
+        self.r = config['r']
+
         norm = sqrt(vect[0]**2 + vect[1]**2 + vect[2]**2)
 
         theta = acos(vect[2]/(0.001 if norm == 0 else norm))*(-1 if vect[0] < 0 else 1)  -pi
         phi = pi/2 + atan(vect[1]/(0.001 if vect[0] == 0 else vect[0]))
         trans_vect = [origin[i] + vect[i] for i in range(0, 3)]
 
-        self.parametric_surface(self.__cone, [0, 0.5, 0, 2*pi], (*color, 250), rotation=(theta, phi), translation=trans_vect)
+        self.parametric_surface(self.__cone, [0, self.h, 0, 2*pi], (*color, 250), **{'rotation': (theta, phi), 'translation': trans_vect})
 
         dx = self.t3d_to_2d(vect)[0]
         dy = self.t3d_to_2d(vect)[1]
@@ -561,40 +565,72 @@ class Scense3D:
 
         x_component = origin_point[0] + dx
         y_component = origin_point[1] + dy
-        pygame.draw.line(screen, color, self.convert((origin_point[0], origin_point[1]), 1), self.convert((x_component, y_component), 1), stroke)
+        pygame.draw.line(screen, color, self.convert((origin_point[0], origin_point[1]), 1), self.convert((x_component, y_component), 1), config['stroke'])
 
-    def vector_field(self, vect_func, xyz_limits, dist):
-        x = xyz_limits[0]
-        while x <= xyz_limits[1]:
-            y = xyz_limits[2]
-            while y <= xyz_limits[3]:
-                z = xyz_limits[4]
-                while z <= xyz_limits[5]:
+    def vector_field(self, vect_func, **kwargs):
+        config = {
+            'stroke': 3,
+            'h': 0.5,
+            'r': 0.25,
+            'dist': 4,
+            'xyz_limits': [-5, 5, -5, 5, -5, 5]
+        }
+        for key, value in kwargs.items():
+            config.update({key: value})
+
+        x = config['xyz_limits'][0]
+        while x <= config['xyz_limits'][1]:
+            y = config['xyz_limits'][2]
+            while y <= config['xyz_limits'][3]:
+                z = config['xyz_limits'][4]
+                while z <= config['xyz_limits'][5]:
                     vect_row = self.__vector_render(vect_func, x, y, z)
-                    self.vector(vect_row[:3], vect_row[3], (x, y, z), 2)
-                    z += dist
-                y += dist
-            x += dist
+                    self.vector(vect_row[:3], vect_row[3], (x, y, z), **config)
+                    z += config['dist']
+                y += config['dist']
+            x += config['dist']
 
-    def cartesian_plane3D(self, scale=6):
+    def cartesian_plane3D(self, scale=4, **kwargs):
+        config = {
+            'stroke': 2,
+            'h': 0.5,
+            'r': 0.25,
+            'color_vect': WHITE
+        }
+        for key, value in kwargs.items():
+            config.update({key: value})
+
         for k in range(-3, 4):
-            self.parametric_line(lambda t: (k, -0.2+t, 0), 0, 0.4, (255, 255, 255))
-            self.parametric_line(lambda t: (-0.2+t, k, 0), 0, 0.4, (255, 255, 255))
-            self.parametric_line(lambda t: (0, -0.2+t, k), 0, 0.4, (255, 255, 255))
-        self.vector([2*scale, 0, 0], (255, 255, 255), [-scale, 0, 0], 2)
-        self.vector([0, 2*scale, 0], (255, 255, 255), [0, -scale, 0], 2)
-        self.vector([0, 0, 2*scale], (255, 255, 255), [0, 0, -scale], 2)
+            self.parametric_line(lambda t: (k, -0.2+t, 0), 0, 0.4, config['color_vect'], **config)
+            self.parametric_line(lambda t: (-0.2+t, k, 0), 0, 0.4, config['color_vect'], **config)
+            self.parametric_line(lambda t: (0, -0.2+t, k), 0, 0.4, config['color_vect'], **config)
+        self.vector([2*scale, 0, 0], config['color_vect'], [-scale, 0, 0], **config)
+        self.vector([0, 2*scale, 0], config['color_vect'], [0, -scale, 0], **config)
+        self.vector([0, 0, 2*scale], config['color_vect'], [0, 0, -scale], **config)
 
-    def parametric_line(self, func, l_min, l_max, color=(255, 255, 0), dl=0.1):
+    def parametric_line(self, func, l_min, l_max, color=YELLOW, dl=0.1, **kwargs):
+        config = {
+            'stroke': 3,
+        }
+        for key, value in kwargs.items():
+            config.update({key: value})
+
         l = l_min
         line_points = []
         while l <= l_max:
             line_points.append(self.convert(self.t3d_to_2d(func(l)), 1))
             l += dl
 
-        pygame.draw.lines(screen, color, False, line_points, 3)
+        pygame.draw.lines(screen, color, False, line_points, config['stroke'])
 
-    def parametric_surface(self, func, uv_limits, color=(0, 0, 200, 100), du=0.6, dv=0.6, rotation=(0, 0), translation=(0, 0, 0)):
+    def parametric_surface(self, func, uv_limits, color=(0, 0, 200, 100), du=0.6, dv=0.6, **kwargs):
+        config = {
+            'rotation': (0, 0),
+            'translation': (0, 0, 0)
+        }
+        for key, value in kwargs.items():
+            config.update({key: value})
+
         polygons = []
         x = uv_limits[0]
         while x < uv_limits[1]:
@@ -605,9 +641,9 @@ class Scense3D:
                     for j in range(0 + 1*i, 2 - 3*i, 1 -2*i):
                         output = func(x + i*du, y + j*dv)
                         new_output = [
-                            translation[0] + output[0]*cos(rotation[1]) - (output[1]*cos(rotation[0]) - output[2]*sin(rotation[0]))*sin(rotation[1]),
-                            translation[1] + (output[1]*cos(rotation[0]) - output[2]*sin(rotation[0]))*cos(rotation[1]) + output[0]*sin(rotation[1]),
-                            translation[2] + output[2]*cos(rotation[0]) + output[1]*sin(rotation[0])
+                            config['translation'][0] + output[0]*cos(config['rotation'][1]) - (output[1]*cos(config['rotation'][0]) - output[2]*sin(config['rotation'][0]))*sin(config['rotation'][1]),
+                            config['translation'][1] + (output[1]*cos(config['rotation'][0]) - output[2]*sin(config['rotation'][0]))*cos(config['rotation'][1]) + output[0]*sin(config['rotation'][1]),
+                            config['translation'][2] + output[2]*cos(config['rotation'][0]) + output[1]*sin(config['rotation'][0])
                         ]
                         ds.append(self.convert(self.t3d_to_2d(new_output) , 1))
                 
@@ -636,7 +672,13 @@ class Scense3D:
         for ds in polygons:
             pygame.gfxdraw.filled_polygon(screen, ds, color)
 
-    def differential(self, func, init_c, t_max, color=YELLOW, dt=0.01):
+    def differential(self, func, init_c, t_max, color=YELLOW, dt=0.01, **kwargs):
+        config = {
+            'stroke': 3,
+        }
+        for key, value in kwargs.items():
+            config.update({key: value})
+
         point_list = []
 
         time = 0
@@ -652,5 +694,5 @@ class Scense3D:
             point_list.append(self.convert(self.t3d_to_2d(new_c), 1))
             time += dt
 
-        pygame.draw.circle(screen, color, [round(axie) for axie in self.convert(self.t3d_to_2d(new_c), 1)], 4)
-        pygame.draw.lines(screen, color, False, point_list, 3)
+        pygame.draw.circle(screen, color, [round(axie) for axie in self.convert(self.t3d_to_2d(new_c), 1)], config['stroke'])
+        pygame.draw.lines(screen, color, False, point_list, config['stroke'])
