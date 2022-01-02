@@ -16,6 +16,7 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 ORANGE = (255, 165, 0)
 PINK = (255, 192, 203)
+BLUE = (0, 96, 255)
 
 screen = None
 font = None
@@ -44,7 +45,7 @@ class Viewer():
         pygame.init()
 
         screen = pygame.display.set_mode((CONFIG['screen_width'], CONFIG['screen_height']))
-        pygame.display.set_caption('DifferentialViewer')
+        pygame.display.set_caption('Matik')
         pygame.Surface((CONFIG['screen_width'], CONFIG['screen_height']))
         pygame.font.init()
         font = pygame.font.SysFont('Arial', 15)
@@ -138,22 +139,22 @@ class Graph:
         points = points_list
         if self.object_selected == None:
             for key, point in enumerate(points):
-                if (self.convert_coords(point, 1)[0] - hitbox[0] <= self.viewer.mouse_state[0] <= self.convert_coords(point, 1)[0] + hitbox[2]) and (self.convert_coords(point, 1)[1] - hitbox[1] <= self.viewer.mouse_state[1] <= self.convert_coords(point, 1)[1] + hitbox[3]) and self.viewer.mouse_pressed:
+                if (self.convert_to_pygame(*point)[0] - hitbox[0] <= self.viewer.mouse_state[0] <= self.convert_to_pygame(*point)[0] + hitbox[2]) and (self.convert_to_pygame(*point)[1] - hitbox[1] <= self.viewer.mouse_state[1] <= self.convert_to_pygame(*point)[1] + hitbox[3]) and self.viewer.mouse_pressed:
                     self.object_selected = key
                      
-                    points[key] = self.convert_coords(self.viewer.mouse_state, 0)
+                    points[key] = self.convert_to_xOy(*self.viewer.mouse_state)
                     break
         elif self.viewer.mouse_pressed:
-            points_list[self.object_selected] = self.convert_coords(self.viewer.mouse_state, 0)
+            points_list[self.object_selected] = self.convert_to_xOy(*self.viewer.mouse_state)
         else:
             self.object_selected = None
         return points_list
 
-    def convert_coords(self, coords, standard):
-        if standard:
-            return [coords[0]*self.unit_x + self.origin[0], -coords[1]*self.unit_x + self.origin[1]]
-        else:
-            return [(coords[0] - self.origin[0])/self.unit_y,-(coords[1] - self.origin[1])/self.unit_y]
+    def convert_to_pygame(self, x, y):
+        return [x*self.unit_x + self.origin[0], -y*self.unit_x + self.origin[1]]
+
+    def convert_to_xOy(self, x, y):
+        return [(x - self.origin[0])/self.unit_y, -(y - self.origin[1])/self.unit_y]
 
     def cartesian_plane(self, move_grid=True, **kwargs):
         config = {
@@ -227,7 +228,7 @@ class Graph:
             pygame.draw.line(self.surface, color, (x - (self.height - self.origin[1])/beta, self.height), (x + self.origin[1]/beta, 0), config['stroke'])
             x -= self.unit_x
 
-    def real_functions(self, function, xd_min, xd_max, dx=0.01, color=YELLOW, **kwargs):
+    def real_functions(self, function, xd_min, xd_max, color=YELLOW, dx=0.01, **kwargs):
         config = {
             'stroke': 3
         }
@@ -236,11 +237,11 @@ class Graph:
 
         x = xd_min if xd_min <= xd_max else xd_max
         function_points = []
-        function_points.append(self.convert_coords((x, function(x)), 1))
+        function_points.append(self.convert_to_pygame(x, function(x)))
         while x <= (xd_max if xd_min < xd_max else xd_min):
             x += dx
             y = function(x)
-            function_points.append(self.convert_coords((x, y), 1))
+            function_points.append(self.convert_to_pygame(x, y))
 
         if len(function_points) >= 2:
             pygame.draw.lines(self.surface, color, False, function_points, config['stroke'])
@@ -260,7 +261,7 @@ class Graph:
             for i in range(0, 2):
                 z.append(func(*domain_func(t))[i])
 
-            complex_function_points.append(self.convert_coords((z[0], z[1]), 1))
+            complex_function_points.append(self.convert_to_pygame(z[0], z[1]))
 
         if len(complex_function_points) >= 2:
             pygame.draw.lines(self.surface, color, False, complex_function_points, config['stroke'])
@@ -277,8 +278,8 @@ class Graph:
 
         x_range = range_line/(1+derivative**2)**0.5
         pygame.draw.line(self.surface, color, 
-        self.convert_coords((x - x_range, (x - x_range)*derivative + b), 1), 
-        self.convert_coords((x + x_range, (x + x_range)*derivative + b), 1), config['stroke'])
+        self.convert_to_pygame(x - x_range, (x - x_range)*derivative + b), 
+        self.convert_to_pygame(x + x_range, (x + x_range)*derivative + b), config['stroke'])
             
         return derivative
 
@@ -296,7 +297,7 @@ class Graph:
             x = x_min + i*dx
             dy = func(x)
             total_sum += dy*dx
-            pygame.gfxdraw.box(self.surface, pygame.Rect(self.convert_coords((x, func(x)), 1), (dx*self.unit_x + 1, dy*self.unit_y + 2)), color)
+            pygame.gfxdraw.box(self.surface, pygame.Rect(self.convert_to_pygame(x, func(x)), (dx*self.unit_x + 1, dy*self.unit_y + 2)), color)
 
         return total_sum
 
@@ -308,7 +309,7 @@ class Graph:
             config.update({key: value})
 
         self.real_functions(func, x - delta, x + delta, color=color)
-        standard_limit = self.convert_coords((x, func(x)), 1)
+        standard_limit = self.convert_to_pygame(x, func(x))
         for i in range(0, 2):
             standard_limit[i] = round(standard_limit[i])
         pygame.draw.circle(self.surface, color, standard_limit, config['radius'])
@@ -325,9 +326,9 @@ class Graph:
         point_list = []
         t = t_min if t_min <= t_max else t_max
 
-        point_list.append(self.convert_coords(func(t), 1))
+        point_list.append(self.convert_to_pygame(*func(t)))
         while t <= (t_max if t_min < t_max else t_min):
-            point_list.append(self.convert_coords(func(t), 1))
+            point_list.append(self.convert_to_pygame(*func(t)))
             t += dt
         
         pygame.draw.lines(self.surface, color, False, point_list, config['stroke'])
@@ -352,7 +353,7 @@ class Graph:
                     ])
                 points = new_points_list
             
-            bezier_points.append(self.convert_coords(points[0], 1))
+            bezier_points.append(self.convert_to_pygame(*points[0]))
             t += dt
         
         pygame.draw.lines(self.surface, color, False, bezier_points, config['stroke'])
@@ -363,7 +364,7 @@ class Graph:
         }
         for key, value in kwargs.items():
             config.update({key: value})
-        pygame.draw.line(self.surface, color, self.convert_coords(init_point, 1), self.convert_coords(end_point, 1), config['stroke'])
+        pygame.draw.line(self.surface, color, self.convert_to_pygame(*init_point), self.convert_to_pygame(*end_point), config['stroke'])
 
     def dot(self, coords, color=(255, 255, 0), **kwargs):
         config = {
@@ -371,7 +372,7 @@ class Graph:
         }
         for key, value in kwargs.items():
             config.update({key: value})
-        integer_coords = [round(self.convert_coords(coords, 1)[0]), round(self.convert_coords(coords, 1)[1])]
+        integer_coords = [round(self.convert_to_pygame(*coords)[0]), round(self.convert_to_pygame(*coords)[1])]
         pygame.draw.circle(self.surface, color, integer_coords, 5)
 
     def circle(self, coords, radius, color=(255, 255, 0), **kwargs):
@@ -380,7 +381,7 @@ class Graph:
         }
         for key, value in kwargs.items():
             config.update({key: value})
-        integer_coords = [round(self.convert_coords(coords, 1)[0]), round(self.convert_coords(coords, 1)[1])]
+        integer_coords = [round(self.convert_to_pygame(*coords)[0]), round(self.convert_to_pygame(*coords)[1])]
         pygame.draw.circle(self.surface, color, integer_coords, radius, config['stroke'])
 
     def polygon(self, points_list, color=(255, 255, 0), **kwargs):
@@ -391,7 +392,7 @@ class Graph:
             config.update({key: value})
         standard_points = []
         for point in points_list:
-            standard_points.append(self.convert_coords(point, 1))
+            standard_points.append(self.convert_to_pygame(*point))
         
         pygame.draw.polygon(self.surface, color, standard_points, config['stroke'])
 
@@ -414,8 +415,8 @@ class Graph:
 
         x_component = origin[0] + vect[0]
         y_component = origin[1] + vect[1]
-        triangle = [self.convert_coords((x_component, y_component), 1), self.convert_coords((x_component + branch1[0], y_component + branch1[1]), 1), self.convert_coords((x_component + branch2[0], y_component + branch2[1]), 1)]
-        pygame.draw.line(self.surface, color, self.convert_coords((origin[0], origin[1]), 1), self.convert_coords((x_component, y_component), 1), config['stroke'])
+        triangle = [self.convert_to_pygame(x_component, y_component), self.convert_to_pygame(x_component + branch1[0], y_component + branch1[1]), self.convert_to_pygame(x_component + branch2[0], y_component + branch2[1])]
+        pygame.draw.line(self.surface, color, self.convert_to_pygame(origin[0], origin[1]), self.convert_to_pygame(x_component, y_component), config['stroke'])
         pygame.gfxdraw.filled_polygon(self.surface, triangle, color)
 
     def __vector_render(self, vect_func, x, y):
