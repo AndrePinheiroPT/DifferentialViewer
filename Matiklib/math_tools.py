@@ -3,11 +3,13 @@ import pygame.gfxdraw
 from pygame.locals import *
 from math import *
 
+# Screen configuration
 CONFIG = {
     'screen_width': 700,
     'screen_height': 700
 }
 
+# Colors 
 CYAN = (55, 55, 55)
 WHITE = (255, 255, 255)
 YELLOW = (255, 255, 0)
@@ -18,15 +20,20 @@ ORANGE = (255, 165, 0)
 PINK = (255, 192, 203)
 BLUE = (0, 96, 255)
 
+# screen and font variables. They value is none until pygame run
 screen = None
 font = None
 
 class Viewer():
     def __init__(self, **kwargs):
+        '''
+        Viewer is a heart class. This class make possible run pygame, to manage the
+        surfaces, slides and send information to the other classes
+        '''
         global CONFIG
         self.mouse_pressed = False
         self.mouse_state = []
-        self.surfaces = []
+        self.surfaces = [] # This is a list of 2 pairs: pygame surface object and his coords
         self.slides = []
         self.slide_index = 0
 
@@ -35,15 +42,28 @@ class Viewer():
         self.time = 0
     
     def set_slides(self, slides):
+        '''
+        set_slides defines a new list of slides
+        :slides: a list of functions (slides)
+        '''
         self.slides = slides
 
     def update_config(self, config):
+        '''
+        update_cofing defines a new screen configuration
+        :slides: configuration of screen using dictionary 
+        '''
         CONFIG.update(config)
 
     def init(self):
+        '''
+        init is the main method of the class. When called, the program starts.
+        Also it's important to have defined the slides list before the method being called.
+        '''
         global screen, font, CONFIG
         pygame.init()
 
+        # setup of variables
         screen = pygame.display.set_mode((CONFIG['screen_width'], CONFIG['screen_height']))
         pygame.display.set_caption('Matik')
         pygame.Surface((CONFIG['screen_width'], CONFIG['screen_height']))
@@ -52,20 +72,25 @@ class Viewer():
         clock = pygame.time.Clock()
         
         while True:
-            clock.tick(100)
+            # 60 fps
+            clock.tick(60)
+            # clean the screen and the surfaces
             screen.fill((0, 0, 0))
             for surf in self.surfaces:
                 surf[0].fill((0, 0, 0))
                 screen.blit(*surf)
 
+            # set mouse coords and run the slide defined by his index
             self.mouse_state = pygame.mouse.get_pos()
             self.slides[self.slide_index]()
             
             for event in pygame.event.get():
+                # close the window
                 if event.type == QUIT:
                     pygame.quit()
 
                 if event.type == pygame.KEYDOWN:
+                    # Change the slide index through keyboard, using the left and right arrow.
                     if event.key == pygame.K_LEFT:
                         if self.slide_index >= 1:
                             self.slide_index -= 1
@@ -76,22 +101,31 @@ class Viewer():
                             self.slide_index += 1
                             self.time = 0
 
+                # Set the state of mouse (pressed or not pressed)
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     self.mouse_pressed = True
 
                 if event.type == pygame.MOUSEBUTTONUP:
                     self.mouse_pressed = False
 
-            
+            # show the surfaces on screen
             for surf in self.surfaces:
                 screen.blit(*surf)
             
+            # update surfaces and creen
             pygame.display.update()
             pygame.display.flip()
             self.time += 0.1
 
 class Graph:
     def __init__(self, viewer, **kwargs):
+        '''
+        Graph class is used to plot interactive graphs. It allows to plot: a cartesian plane;
+        vector fields; vectors; parametric curves; functions; complex functions; linear transformations and a bit more.
+
+        :viewer: class used for extract information of mouse.
+        :kwargs: dictionary with the surface configuration.
+        '''
         graph_config = {
             'coords': (0, 0),
             'width': CONFIG['screen_width'],
@@ -104,10 +138,12 @@ class Graph:
         for key, value in kwargs.items():
             graph_config.update({key, value})
         
+        # setup surface
         self.surface = pygame.Surface([graph_config['width'], graph_config['height']])
         self.viewer = viewer
         self.viewer.surfaces.append([self.surface, graph_config['coords']])
 
+        # variable setting
         self.coords = graph_config['coords']
         self.width = graph_config['width']
         self.height = graph_config['height']
@@ -117,12 +153,14 @@ class Graph:
         self.y_label = graph_config['y_label']
         self.prev_state = None
         self.object_selected = None
-
-        print(self.width, self.height)
     
         self.origin = [self.width/2, self.height/2]      
 
     def check_mouse(self):
+        '''
+        check_mouse is used to manipulate the cartesian plane. It defines a 
+        new origin coords by pressed mouse movement.
+        '''
         mouse_state = pygame.mouse.get_pos()
         
         if self.viewer.mouse_pressed:
@@ -136,12 +174,19 @@ class Graph:
             self.prev_state = None
 
     def manipulation_points(self, points_list, hitbox):
+        '''
+        manipulation_points does a new list of points based on mouse coords. A click
+        on one point of the list allows to change his coords
+        :points_list: a list of points which can be manipulated
+        :hitbox: area where mouse click need to be contained
+        '''
         points = points_list
         if self.object_selected == None:
             for key, point in enumerate(points):
+                # check if mouse is contained in hitbox
                 if (self.convert_to_pygame(*point)[0] - hitbox[0] <= self.viewer.mouse_state[0] <= self.convert_to_pygame(*point)[0] + hitbox[2]) and (self.convert_to_pygame(*point)[1] - hitbox[1] <= self.viewer.mouse_state[1] <= self.convert_to_pygame(*point)[1] + hitbox[3]) and self.viewer.mouse_pressed:
                     self.object_selected = key
-                     
+                    # change the coords 
                     points[key] = self.convert_to_xOy(*self.viewer.mouse_state)
                     break
         elif self.viewer.mouse_pressed:
@@ -151,12 +196,27 @@ class Graph:
         return points_list
 
     def convert_to_pygame(self, x, y):
+        '''
+        Convert the cartesian plane coords to the pygame coords
+        :x: x-axis
+        :y: y-axis
+        '''
         return [x*self.unit_x + self.origin[0], -y*self.unit_x + self.origin[1]]
 
     def convert_to_xOy(self, x, y):
+        '''
+        Convert the pygame coords to the cartesian plane coords
+        :x: x of screen
+        :y: y of screen
+        '''
         return [(x - self.origin[0])/self.unit_y, -(y - self.origin[1])/self.unit_y]
 
     def cartesian_plane(self, move_grid=True, **kwargs):
+        '''
+        cartesian_plane plots a xOy plane on the surface.
+        :move_grid: allows you create a interactive plane or not
+        :kwargs: additional information
+        '''
         config = {
             'color': WHITE,
             'stroke': 1
@@ -164,9 +224,11 @@ class Graph:
         for key, value in kwargs.items():
             config.update({key: value})
 
+        # use check_mouse() to move the grid
         if move_grid and self.object_selected == None:
             self.check_mouse()
 
+        # plot lines and values in positive direction of x
         x = self.origin[0]
         x_value = 0
         while x <= self.width: 
@@ -174,7 +236,8 @@ class Graph:
             self.surface.blit(font.render(f'{x_value}', False, config['color']), (x + 2 , self.origin[1]))
             x += self.unit_x
             x_value += 1
-            
+        
+        # plot lines and values in negative direction of x
         x = self.origin[0]
         x_value = 0
         while x >= 0:
@@ -183,6 +246,7 @@ class Graph:
             x -= self.unit_x
             x_value -= 1
 
+        # plot lines and values in negative direction of y
         y = self.origin[1]
         y_value = 0
         while y <= self.height:
@@ -192,6 +256,7 @@ class Graph:
             y += self.unit_y
             y_value -= 1
 
+        # plot lines and values in positive direction of y
         y = self.origin[1]
         y_value = 0
         while y >= 0:
@@ -201,27 +266,37 @@ class Graph:
             y -= self.unit_y
             y_value += 1
         
+        # plot the label of each axis and the main line of each one
         self.surface.blit(font.render(f'{self.x_label}', False, config['color']), (self.width-10, self.origin[1]-14))
         self.surface.blit(font.render(f'{self.y_label}', False, config['color']), (self.origin[0]-12, 0))
         pygame.draw.line(self.surface, config['color'], (self.origin[0], 0), (self.origin[0], self.height), config['stroke'])
         pygame.draw.line(self.surface, config['color'], (0, self.origin[1]), (self.width, self.origin[1]), config['stroke'])
 
     def linear_transformation(self, matrix, color=YELLOW, **kwargs):
+        '''
+        linear_transformation plots a grid of a linear transformation done by a 2x2 matrix 
+        :matrix: 2D list with the values 
+        :color: color of the grid
+        :kwargs: additional information
+        '''
         config = {
             'stroke': 1
         }
         for key, value in kwargs.items():
             config.update({key: value})
         
+        # seting the slope values
         alpha = matrix[1][0]/(0.001 if matrix[0][0] == 0 else matrix[0][0])
         beta = matrix[1][1]/(0.001 if matrix[0][1] == 0 else matrix[0][1])
 
+        # plot lines in x and y positive direction
         x = self.origin[0]
         while x <= self.width + 5*self.unit_x: 
             pygame.draw.line(self.surface, color, (x - (self.height - self.origin[1])/alpha, self.height), (x + self.origin[1]/alpha, 0), config['stroke'])
             pygame.draw.line(self.surface, color, (x - (self.height - self.origin[1])/beta, self.height), (x + self.origin[1]/beta, 0), config['stroke'])
             x += self.unit_x
-            
+        
+        # plot lines in x and y negative direction
         x = self.origin[0]
         while x >= 0 - 5*self.unit_x:
             pygame.draw.line(self.surface, color, (x - (self.height - self.origin[1])/alpha, self.height), (x + self.origin[1]/alpha, 0), config['stroke'])
@@ -229,30 +304,55 @@ class Graph:
             x -= self.unit_x
 
     def real_functions(self, function, xd_min, xd_max, color=YELLOW, dx=0.01, **kwargs):
+        '''
+        real_functions plots a function on xOy plane. So it's R -> R function.
+        :function: function with has x as parameter and returns f(x) value
+        :xd_min: lowest value of the domain
+        :xd_max: highest value of the domain
+        :color: color of the function
+        :dx: discrete value interval (delta x)
+        :kwargs: additional information
+        '''
         config = {
             'stroke': 3
         }
         for key, value in kwargs.items():
             config.update({key: value})
 
+        # get the lowest value for starting plot
         x = xd_min if xd_min <= xd_max else xd_max
+        # add initil point to the points list
         function_points = []
         function_points.append(self.convert_to_pygame(x, function(x)))
+        # loop for get more points.
         while x <= (xd_max if xd_min < xd_max else xd_min):
             x += dx
             y = function(x)
             function_points.append(self.convert_to_pygame(x, y))
 
         if len(function_points) >= 2:
+            # draw the function on surface
             pygame.draw.lines(self.surface, color, False, function_points, config['stroke'])
 
     def complex_functions(self, func, domain_func, t_min, t_max, color=YELLOW, dt=0.01, **kwargs):
+        '''
+        complex_functions plots a function on complex plane. So it's R^2 -> R^2 function.
+        The domain function is a parametric line used to get the values on complex plane.
+        :func: function with has a and b as parameter (a+ib) and returns a list which represents a complex value [a, b]
+        :domain_func: parametric curve that represents the domain of the function. So it's R -> R^2 function
+        :t_min: lowest value of the domain of parametric curve
+        :t_max: highest value of the domain of parametric curve
+        :color: color of the function
+        :dx: discrete value interval (delta x)
+        :kwargs: additional information
+        '''
         config = {
             'stroke': 2
         }
         for key, value in kwargs.items():
             config.update({key: value})
         
+        # get the lowest value of t for starting plot
         complex_function_points = []
         t = t_min if t_min <= t_max else t_max
         while t <= (t_max if t_min < t_max else t_min):
@@ -267,19 +367,29 @@ class Graph:
             pygame.draw.lines(self.surface, color, False, complex_function_points, config['stroke'])
 
     def derivative_line(self, func, x, range_line, color=PINK, h=0.0001, **kwargs):
+        '''
+        derivative_line returns the value of the slope in some point of a real function and plots a tangent line in that point.
+        :func: real function R -> R
+        :x: x value used to get a point
+        :range_line: length of the line that will be plotted
+        :kwargs: additional information
+        '''
         config = {
             'stroke': 3
         }
         for key, value in kwargs.items():
             config.update({key: value})
 
+        # compute the derivative
         derivative = (func(x+h) - func(x)) / h  # slope
         b = func(x) - derivative*x
 
-        x_range = range_line/(1+derivative**2)**0.5
-        pygame.draw.line(self.surface, color, 
-        self.convert_to_pygame(x - x_range, (x - x_range)*derivative + b), 
-        self.convert_to_pygame(x + x_range, (x + x_range)*derivative + b), config['stroke'])
+        # plot the tangent line
+        if range_line != 0:
+            x_range = range_line/(1+derivative**2)**0.5
+            pygame.draw.line(self.surface, color, 
+            self.convert_to_pygame(x - x_range, (x - x_range)*derivative + b), 
+            self.convert_to_pygame(x + x_range, (x + x_range)*derivative + b), config['stroke'])
             
         return derivative
 
