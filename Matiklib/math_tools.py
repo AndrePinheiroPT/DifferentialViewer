@@ -394,56 +394,99 @@ class Graph:
         return derivative
 
     def riemann_rectangles(self, func, x_min, x_max, n, color_init=[131, 47, 0, 200], color_end=[231, 242, 0, 200]):
+        '''
+        riemann_rectangles plot rectangles under the curve of a real function (R->R) and return the 
+        area of them. 
+        :func: real function R -> R
+        :x_min: boundary a
+        :x_max: boundary b
+        :n: number of rectangles
+        :color_init: intial color of the gradient
+        :color_end: end color of the gradient
+        '''
+
+        # set color gradient (delta color)
         color = [0, 0, 0, 0]
         d_color = [0, 0, 0, 0]
         for k in range(0, 4):
             d_color[k] = (color_end[k] - color_init[k]) / n
 
+        # descrite value
         dx = (x_max - x_min) / n
         total_sum = 0
+        
         for i in range(0, n):
             for k in range(0, 4):
                 color[k] = color_init[k] + d_color[k]*i
             x = x_min + i*dx
             dy = func(x)
             total_sum += dy*dx
+            # plot each rectangle
             pygame.gfxdraw.box(self.surface, pygame.Rect(self.convert_to_pygame(x, func(x)), (dx*self.unit_x + 1, dy*self.unit_y + 2)), color)
 
         return total_sum
 
     def limit_aproximation(self, func, x, delta, color=ORANGE, **kwargs):
+        '''
+        limit_aproximation plots the boundary of aproximation and returns the lateral limits of the function.
+        :func: real function R -> R
+        :x: the value of aproximation
+        :delta: sets the boundary of aproximation
+        :color: color of the boundary
+        :kwargs: additional information
+        '''
         config = {
             'radius': 4
         }
         for key, value in kwargs.items():
             config.update({key: value})
 
+        # plots the boundary
         self.real_functions(func, x - delta, x + delta, color=color)
         standard_limit = self.convert_to_pygame(x, func(x))
         for i in range(0, 2):
             standard_limit[i] = round(standard_limit[i])
         pygame.draw.circle(self.surface, color, standard_limit, config['radius'])
 
+        # returns the lateral limits
         return [func(x - delta), func(x + delta)]
 
     def parametric_functions(self, func, t_min, t_max, color=YELLOW, dt=0.01, **kwargs):
+        '''
+        parametric_functions plots a function R->R^2.
+        :func: real function R -> R^2
+        :t_min: lowest value of the domain
+        :t_max: highest value of the domain
+        :color: color of the function
+        :dt: discrete value interval (delta t)
+        :kwargs: additional information
+        '''
         config = {
             'stroke': 3
         }
         for key, value in kwargs.items():
             config.update({key: value})
 
-        point_list = []
+        # set lowest value
         t = t_min if t_min <= t_max else t_max
-
+        # get all points of the function
+        point_list = []
         point_list.append(self.convert_to_pygame(*func(t)))
         while t <= (t_max if t_min < t_max else t_min):
             point_list.append(self.convert_to_pygame(*func(t)))
             t += dt
-        
+        # plot function
         pygame.draw.lines(self.surface, color, False, point_list, config['stroke'])
 
     def bazier_curve(self, points_list, t_max, color=YELLOW, dt=0.01, **kwargs):
+        '''
+        bazier_curve plots a curve based on list of points.
+        :points_list: list of points used for make the curve
+        :t_max: goes from 0 to 1, 1 means a complete curve
+        :color: color of the curve
+        :dt: discrete value interval (delta t)
+        :kwargs: additional information
+        '''
         config = {
             'stroke': 3
         }
@@ -451,6 +494,7 @@ class Graph:
             config.update({key: value})
 
         bezier_points = []
+        # compute all points of the curve
         t = 0
         while t < t_max:
             points = points_list
@@ -466,47 +510,84 @@ class Graph:
             bezier_points.append(self.convert_to_pygame(*points[0]))
             t += dt
         
+        # plots the curve
         pygame.draw.lines(self.surface, color, False, bezier_points, config['stroke'])
         
     def line(self, init_point, end_point, color=YELLOW, **kwargs):
+        '''
+        plots a line
+        :init_point: initial point of the line
+        :end_point: final point of the line
+        :color: color of the line
+        :kwargs: additional information
+        '''
         config = {
             'stroke': 1
         }
         for key, value in kwargs.items():
             config.update({key: value})
+        # plots the line
         pygame.draw.line(self.surface, color, self.convert_to_pygame(*init_point), self.convert_to_pygame(*end_point), config['stroke'])
 
-    def dot(self, coords, color=(255, 255, 0), **kwargs):
+    def dot(self, coords, color=YELLOW, **kwargs):
+        '''
+        plots a dot
+        :coords: coords of the point
+        :color: color of the dot
+        :kwargs: additional information
+        '''
         config = {
             'stroke': 3
         }
         for key, value in kwargs.items():
             config.update({key: value})
+        # plots the dot
         integer_coords = [round(self.convert_to_pygame(*coords)[0]), round(self.convert_to_pygame(*coords)[1])]
         pygame.draw.circle(self.surface, color, integer_coords, 5)
 
-    def circle(self, coords, radius, color=(255, 255, 0), **kwargs):
+    def circle(self, coords, radius, color=YELLOW, **kwargs):
+        '''
+        plots a circle
+        :coords: coords of the center of circle
+        :color: color of the circle
+        :kwargs: additional information
+        '''
         config = {
             'stroke': 3
         }
         for key, value in kwargs.items():
             config.update({key: value})
+        # plots the circle
         integer_coords = [round(self.convert_to_pygame(*coords)[0]), round(self.convert_to_pygame(*coords)[1])]
         pygame.draw.circle(self.surface, color, integer_coords, radius, config['stroke'])
 
-    def polygon(self, points_list, color=(255, 255, 0), **kwargs):
+    def polygon(self, points_list, color=YELLOW, **kwargs):
+        '''
+        plots a polygon based on points 
+        :points_list: list of points used for draw the polygon
+        :color: color of the circle
+        :kwargs: additional information
+        '''
         config = {
             'stroke': 3
         }
         for key, value in kwargs.items():
             config.update({key: value})
+        # set points list
         standard_points = []
         for point in points_list:
             standard_points.append(self.convert_to_pygame(*point))
-        
+        # plots polygon
         pygame.draw.polygon(self.surface, color, standard_points, config['stroke'])
 
     def vector(self, vect, color, origin=[0, 0], **kwargs):
+        '''
+        plots a vector
+        :vect: coords of the vector
+        :color: color of the vector
+        :origin: origin coords of the vector 
+        :kwargs: additional information
+        '''
         config = {
             'stroke': 4,
             'angle': pi/7,
@@ -514,15 +595,18 @@ class Graph:
         }
         for key, value in kwargs.items():
             config.update({key: value})
+        # define the unit vector of the vector
         vector_length = 0.001 if sqrt(vect[0]**2 + vect[1]**2) == 0 else sqrt(vect[0]**2 + vect[1]**2)
         unit_vector = [-vect[0]/vector_length, -vect[1]/vector_length]
 
+        # set the branches of the vector
         theta = config['angle']
         vector_angle = (2*pi - acos(unit_vector[0]) if unit_vector[1] <= 0 else acos(unit_vector[0]))
 
         branch1 = [config['arrow_length']*cos(vector_angle - theta), config['arrow_length']*sin(vector_angle - theta)]
         branch2 = [config['arrow_length']*cos(vector_angle + theta), config['arrow_length']*sin(vector_angle + theta)]
 
+        # plots the vector
         x_component = origin[0] + vect[0]
         y_component = origin[1] + vect[1]
         triangle = [self.convert_to_pygame(x_component, y_component), self.convert_to_pygame(x_component + branch1[0], y_component + branch1[1]), self.convert_to_pygame(x_component + branch2[0], y_component + branch2[1])]
@@ -534,6 +618,7 @@ class Graph:
         vx = vect_func(x, y)[0]
         vy = vect_func(x, y)[1]
 
+        # set color gradient according to norm of the vector
         t = sqrt(vx**2 + vy**2)/50 if sqrt(vx**2 + vy**2)/50 <= 1 else 1
         h = t*510 if t <= 0.5 else 255
         q = 255 if t <= 0.5 else (-t*510 + 510)
@@ -545,9 +630,16 @@ class Graph:
         ]
 
     def vector_field(self, vect_func, **kwargs):
+        '''
+        plots a vector field
+        :vect_function: real function R^2->R^2 
+        '''
+
+        # get positive values in x direction
         x = self.origin[0]
         x_value = 0
         while x <= CONFIG['screen_width'] + self.unit_x:
+            # plot vectors in y positive direction
             y = self.origin[1]
             y_value = 0
             while y <= CONFIG['screen_height'] + self.unit_y:
@@ -556,6 +648,7 @@ class Graph:
                 y += self.unit_y
                 y_value -= 1
 
+            # plot vectors in y negative direction
             y = self.origin[1]
             y_value = 0
             while y >= 0 - self.unit_y:
@@ -565,10 +658,12 @@ class Graph:
 
             x += self.unit_x
             x_value += 1
-            
+        
+        # get negative values in x direction
         x = self.origin[0]
         x_value = 0
         while x >= 0 - self.unit_x:
+            # plot vectors in y positive direction
             y = self.origin[1]
             y_value = 0
             while y <= CONFIG['screen_height'] + self.unit_y:
@@ -577,6 +672,7 @@ class Graph:
                 y += self.unit_y
                 y_value -= 1
 
+            # plot vectors in y negative direction
             y = self.origin[1]
             y_value = 0
             while y >= 0 - self.unit_y:
