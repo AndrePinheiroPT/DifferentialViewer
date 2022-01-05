@@ -1,0 +1,12 @@
+CHANGELOG.txt
+MANIFEST.in
+README.md
+main.py
+setup.py
+Matiklib/__init__.py
+Matiklib/math_tools.py
+Matiklib.egg-info/PKG-INFO
+Matiklib.egg-info/SOURCES.txt
+Matiklib.egg-info/dependency_links.txt
+Matiklib.egg-info/requires.txt
+Matiklib.egg-info/top_level.txt

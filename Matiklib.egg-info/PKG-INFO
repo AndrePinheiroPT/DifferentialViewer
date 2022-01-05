@@ -1,0 +1,27 @@
+Metadata-Version: 1.1
+Name: Matiklib
+Version: 1.0.0
+Summary: Math library for math concepts
+Home-page: https://github.com/AndrePinheiroPT/Matik
+Author: André Pinheiro
+Author-email: andrepinheiro2004@gmail.com
+License: MIT
+Description: # Matik
+        Do you like work with math? Check out this library which can help you 
+        with some math intuition, apresetation of math concepts and create interactive graphs as 
+        you want!
+        
+        WIP
+        
+        
+        Change log
+        ==========
+        
+        1.0.0 (01/01/2022)
+        -------------------
+        First release
+Platform: UNKNOWN
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Education
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3

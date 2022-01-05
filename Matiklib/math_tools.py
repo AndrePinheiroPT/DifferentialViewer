@@ -136,7 +136,7 @@ class Graph:
             'y_label': 'Y'
         }
         for key, value in kwargs.items():
-            graph_config.update({key, value})
+            graph_config.update({key: value})
         
         # setup surface
         self.surface = pygame.Surface([graph_config['width'], graph_config['height']])
