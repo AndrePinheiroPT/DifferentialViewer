@@ -537,13 +537,13 @@ class Graph:
         :kwargs: additional information
         '''
         config = {
-            'stroke': 3
+            'radius': 3
         }
         for key, value in kwargs.items():
             config.update({key: value})
         # plots the dot
         integer_coords = [round(self.convert_to_pygame(*coords)[0]), round(self.convert_to_pygame(*coords)[1])]
-        pygame.draw.circle(self.surface, color, integer_coords, 5)
+        pygame.draw.circle(self.surface, color, integer_coords, config['radius'])
 
     def circle(self, coords, radius, color=YELLOW, **kwargs):
         '''
@@ -682,8 +682,17 @@ class Graph:
             x -= self.unit_x
             x_value -= 1
 
-class Scense3D:
+class Graph3D:
     def __init__(self, r, theta, phi, viewer):
+        '''
+        Graph3D is a class used to plot vectors, parametric surfaces, differential equations and 
+        a bit more in a 3rd dimension. 
+        :r: r lenght in spherical coords
+        :theta: theta value in spherical coords
+        :phi: phi value in spherical coords
+        :viewer: class Viewer
+        '''
+        # Set variables
         self.r = r
         self.theta = theta
         self.phi = phi 
@@ -692,33 +701,44 @@ class Scense3D:
         self.viewer = viewer
         self.dxy = [0, 0]
 
+        # radius and height of a cone
         self.h = 0.5
         self.r = 0.25
 
     def __cone(self, u, v):
+        # Parametric equation of a cone
         return [(self.r*u/self.h)*cos(v), (self.r*u/self.h)*sin(v), u]
 
     def __vector_render(self, vect_func, x, y, z):
-        
+        # get components of the vector
         vx = vect_func(x, y, z)[0]
         vy = vect_func(x, y, z)[1]
         vz = vect_func(x, y, z)[2]
         norm = (0.01 if sqrt(vx**2 + vy**2 + vz**2) == 0 else sqrt(vx**2 + vy**2 + vz**2))
 
-        t = sqrt(vx**2 + vy**2 + vz**2)/50 if sqrt(vx**2 + vy**2 + vz**2)/50 <= 1 else 1
+        # set the color according to his norm
+        t = norm/50 if norm/50 <= 1 else 1
         h = t*510 if t <= 0.5 else 255
         q = 255 if t <= 0.5 else (-t*510 + 510)
 
+        # returns [(vector with length 2)*, [r, g, b]]
         return [2*vx/norm, 2*vy/norm, 2*vz/norm, [h, q, 0]]
 
     def t3d_to_2d(self, point):
+        '''
+        t3d_to_2d is a map which gets the coords of a point in 
+        3D space to a point in pygame coords (2D Plane)
+        :point: 3D point coords
+        '''
         self.check_mouse()
+        # Matrix used in linear transformation
         matrix = (
             ((1/self.r)*sin(self.phi), (1/self.r)*cos(self.phi), 0),
             (-(1/self.r)*cos(self.phi)*cos(self.theta), (1/self.r)*sin(self.phi)*cos(self.theta), (1/self.r)*sin(self.theta)),
             (0, 0, 0)
         )
         
+        # set new point
         new_point = [0, 0]
         for k in range(0, 2):
             for i in range(0, 3):
@@ -726,26 +746,50 @@ class Scense3D:
                 
         return new_point
 
-    def convert(self, coords, standard=True):
-        if standard:
-            return [coords[0]*10 + CONFIG['screen_width']/2, -coords[1]*10 + CONFIG['screen_height']/2]
-        else:
-            return [(coords[0] - CONFIG['screen_width']/2)/10,-(coords[1] - CONFIG['screen_height']/2)/10]
+    def convert_to_pygame(self, x, y):
+        '''
+        convert a cartesian point to a pygame point
+        :x: x value
+        :y: y value
+        '''
+        return [(x- CONFIG['screen_width']/2)/10,-(y - CONFIG['screen_height']/2)/10]
+
+    def convert_to_xOy(self, x, y):
+        '''
+        convert a pygame point to a cartesian point 
+        :x: x value
+        :y: y value
+        '''
+        return [x*10 + CONFIG['screen_width']/2, -y*10 + CONFIG['screen_height']/2]
+            
 
     def check_mouse(self):
-        mouse_state = self.convert(pygame.mouse.get_pos(), 0)
+        '''
+        check_mouse is used to manipulate the 3D cartesian plane. It makes possible rotate 
+        by pressed mouse movement.
+        '''
+        mouse_state = self.convert_to_xOy(*pygame.mouse.get_pos())
         if self.viewer.mouse_pressed:
             if not self.can_change:
                 self.prev_state = mouse_state
+            # define new values of theta and phi
             self.theta = self.dxy[0] + (mouse_state[1] - self.prev_state[1])*0.10
             self.phi = self.dxy[1] + (mouse_state[0] - self.prev_state[0])*0.10
             self.can_change = True
         else:
             if self.can_change:
+                # Prev values of theta and phi
                 self.dxy = [self.theta, self.phi]
             self.can_change = False
             
     def vector(self, vect, color, origin=(0, 0, 0), **kwargs):
+        '''
+        plots a 3D vector
+        :vect: vect components
+        :color: color of the vector
+        :origin: origin point of the vector
+        :kwargs: additional information
+        '''
         config = {
             'stroke': 3,
             'h': 0.5,
@@ -754,17 +798,20 @@ class Scense3D:
         for key, value in kwargs.items():
             config.update({key: value})
 
+        # radius and height of the cone
         self.h = config['h']
         self.r = config['r']
 
+        # define the values of theta and phi of cone rotation
         norm = sqrt(vect[0]**2 + vect[1]**2 + vect[2]**2)
-
         theta = acos(vect[2]/(0.001 if norm == 0 else norm))*(-1 if vect[0] < 0 else 1)  -pi
         phi = pi/2 + atan(vect[1]/(0.001 if vect[0] == 0 else vect[0]))
         trans_vect = [origin[i] + vect[i] for i in range(0, 3)]
 
+        # plot cone of the vector
         self.parametric_surface(self.__cone, [0, self.h, 0, 2*pi], (*color, 250), **{'rotation': (theta, phi), 'translation': trans_vect})
 
+        # plot the vector
         dx = self.t3d_to_2d(vect)[0]
         dy = self.t3d_to_2d(vect)[1]
 
@@ -772,9 +819,14 @@ class Scense3D:
 
         x_component = origin_point[0] + dx
         y_component = origin_point[1] + dy
-        pygame.draw.line(screen, color, self.convert((origin_point[0], origin_point[1]), 1), self.convert((x_component, y_component), 1), config['stroke'])
+        pygame.draw.line(screen, color, self.convert_to_pygame(origin_point[0], origin_point[1]), self.convert_to_pygame(x_component, y_component), config['stroke'])
 
     def vector_field(self, vect_func, **kwargs):
+        '''
+        plots a 3D vector field
+        :vect_func: vector field equation (R^3 -> R^3)
+        :kwargs: additional information
+        '''
         config = {
             'stroke': 3,
             'h': 0.5,
@@ -785,12 +837,14 @@ class Scense3D:
         for key, value in kwargs.items():
             config.update({key: value})
 
+        # loop for each point in Oxyz
         x = config['xyz_limits'][0]
         while x <= config['xyz_limits'][1]:
             y = config['xyz_limits'][2]
             while y <= config['xyz_limits'][3]:
                 z = config['xyz_limits'][4]
                 while z <= config['xyz_limits'][5]:
+                    # plot vectors
                     vect_row = self.__vector_render(vect_func, x, y, z)
                     self.vector(vect_row[:3], vect_row[3], (x, y, z), **config)
                     z += config['dist']
@@ -807,10 +861,12 @@ class Scense3D:
         for key, value in kwargs.items():
             config.update({key: value})
 
+        # Plot mini lines 
         for k in range(-3, 4):
             self.parametric_line(lambda t: (k, -0.2+t, 0), 0, 0.4, config['color_vect'], **config)
             self.parametric_line(lambda t: (-0.2+t, k, 0), 0, 0.4, config['color_vect'], **config)
             self.parametric_line(lambda t: (0, -0.2+t, k), 0, 0.4, config['color_vect'], **config)
+        # Plot the 3 axies
         self.vector([2*scale, 0, 0], config['color_vect'], [-scale, 0, 0], **config)
         self.vector([0, 2*scale, 0], config['color_vect'], [0, -scale, 0], **config)
         self.vector([0, 0, 2*scale], config['color_vect'], [0, 0, -scale], **config)
@@ -825,7 +881,7 @@ class Scense3D:
         l = l_min
         line_points = []
         while l <= l_max:
-            line_points.append(self.convert(self.t3d_to_2d(func(l)), 1))
+            line_points.append(self.convert_to_pygame(*self.t3d_to_2d(func(l))))
             l += dl
 
         pygame.draw.lines(screen, color, False, line_points, config['stroke'])
@@ -852,7 +908,7 @@ class Scense3D:
                             config['translation'][1] + (output[1]*cos(config['rotation'][0]) - output[2]*sin(config['rotation'][0]))*cos(config['rotation'][1]) + output[0]*sin(config['rotation'][1]),
                             config['translation'][2] + output[2]*cos(config['rotation'][0]) + output[1]*sin(config['rotation'][0])
                         ]
-                        ds.append(self.convert(self.t3d_to_2d(new_output) , 1))
+                        ds.append(self.convert_to_pygame(*self.t3d_to_2d(new_output)))
                 
                 polygons.append(ds)
                 y += dv
@@ -870,7 +926,7 @@ class Scense3D:
                 ds = []
                 for i in range(0, 2):
                     for j in range(0 + 1*i, 2 - 3*i, 1 -2*i):
-                        ds.append(self.convert(self.t3d_to_2d([x + i*dx, y + j*dy, func(x + i*dx, y + j*dy)]) , 1))
+                        ds.append(self.convert_to_pygame(*self.t3d_to_2d([x + i*dx, y + j*dy, func(x + i*dx, y + j*dy)])))
                 
                 polygons.append(ds)
                 y += dy
@@ -893,13 +949,13 @@ class Scense3D:
         while time <= t_max:
             dxyz = func(new_c)
             if len(point_list) == 0:
-                point_list.append(self.convert(self.t3d_to_2d(new_c), 1))
+                point_list.append(self.convert_to_pygame(*self.t3d_to_2d(new_c)))
 
             for i in range(0, 3):
                 new_c[i] += dxyz[i] * dt
 
-            point_list.append(self.convert(self.t3d_to_2d(new_c), 1))
+            point_list.append(self.convert_to_pygame(*self.t3d_to_2d(new_c)))
             time += dt
 
-        pygame.draw.circle(screen, color, [round(axie) for axie in self.convert(self.t3d_to_2d(new_c), 1)], config['stroke'])
+        pygame.draw.circle(screen, color, [round(axie) for axie in self.convert_to_pygame(*self.t3d_to_2d(new_c))], config['stroke'])
         pygame.draw.lines(screen, color, False, point_list, config['stroke'])
