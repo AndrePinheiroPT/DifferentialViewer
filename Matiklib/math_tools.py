@@ -872,21 +872,43 @@ class Graph3D:
         self.vector([0, 0, 2*scale], config['color_vect'], [0, 0, -scale], **config)
 
     def parametric_line(self, func, l_min, l_max, color=YELLOW, dl=0.1, **kwargs):
+        '''
+        parametric_line plots a three dimensional line on cartesian plane. So, the map is
+        R -> R^3.
+        :func: map R->R^3 / t -> (x(t), y(t), z(t))
+        :l_min: lowest value of domain
+        :l_max: highest value of domain
+        :color: color of the line
+        :dl: descrete value
+        :kwargs: additional information
+        '''
         config = {
             'stroke': 3,
         }
         for key, value in kwargs.items():
             config.update({key: value})
 
+        # get a list of points
         l = l_min
         line_points = []
         while l <= l_max:
             line_points.append(self.convert_to_pygame(*self.t3d_to_2d(func(l))))
             l += dl
 
+        # draw the line
         pygame.draw.lines(screen, color, False, line_points, config['stroke'])
 
     def parametric_surface(self, func, uv_limits, color=(0, 0, 200, 100), du=0.6, dv=0.6, **kwargs):
+        '''
+        parametric_surface plots a three dimensional surface on cartesian plane. So, the map is
+        R^2 -> R^3.
+        :func: map R^2->R^3 / (u, v) -> (x(u, v), y(u, v), z(u, v))
+        :uv_limits: list of limits of the domain [u_min, u_max, v_min, v_max]
+        :color: color of the surface, alpha value is allowed
+        :du: descrete value of u
+        :dv: descrete value of v
+        :kwargs: additional information
+        '''
         config = {
             'rotation': (0, 0),
             'translation': (0, 0, 0)
@@ -894,15 +916,20 @@ class Graph3D:
         for key, value in kwargs.items():
             config.update({key: value})
 
+        # list of polygons
         polygons = []
+        # loop for all the domain
         x = uv_limits[0]
         while x < uv_limits[1]:
             y = uv_limits[2]
             while y < uv_limits[3]:
+                # list of points of the polygon
                 ds = []
                 for i in range(0, 2):
+                    # Add points in a correct order
                     for j in range(0 + 1*i, 2 - 3*i, 1 -2*i):
                         output = func(x + i*du, y + j*dv)
+                        # Sets rotation + translation
                         new_output = [
                             config['translation'][0] + output[0]*cos(config['rotation'][1]) - (output[1]*cos(config['rotation'][0]) - output[2]*sin(config['rotation'][0]))*sin(config['rotation'][1]),
                             config['translation'][1] + (output[1]*cos(config['rotation'][0]) - output[2]*sin(config['rotation'][0]))*cos(config['rotation'][1]) + output[0]*sin(config['rotation'][1]),
@@ -913,16 +940,26 @@ class Graph3D:
                 polygons.append(ds)
                 y += dv
             x += du
-         
+        
+        # plot all polygons
         for ds in polygons:
             pygame.gfxdraw.filled_polygon(screen, ds, color)
 
     def function(self, func, xy_limits, color=(0, 0, 200, 100), dx=0.6, dy=0.6):
+        '''
+        plots a function R^2->R. 
+        :func: map R^2->R / (x, y) -> z(x, y)
+        :xy_limits: limits of the domain.
+        :color: color of the function surface, alpha value is allowed
+        :dx: descrete value for x
+        :dy: descrete value for y
+        '''
         polygons = []
         x = xy_limits[0]
         while x < xy_limits[1]:
             y = xy_limits[2]
             while y < xy_limits[3]:
+                # Set the points of polygon in correct order
                 ds = []
                 for i in range(0, 2):
                     for j in range(0 + 1*i, 2 - 3*i, 1 -2*i):
@@ -931,31 +968,45 @@ class Graph3D:
                 polygons.append(ds)
                 y += dy
             x += dx
-         
+        
+        # Plot all polygons
         for ds in polygons:
             pygame.gfxdraw.filled_polygon(screen, ds, color)
 
     def differential(self, func, init_c, t_max, color=YELLOW, dt=0.01, **kwargs):
+        '''
+        differential plots the evolution of a differential equation depended on the time.
+        So a partial differential equation dx = K(x,y,z)_1*dt, dy = K(x,y,z)_2*dt, dz = K(x,y,z)_3z*dt
+        can be expressed as a map: G: R^3->R^3 / (x,y,z) -> (K(x,y,z)_1, K(x,y,z)_2, K(x,y,z)_3). Giving a 
+        initial condition (x_0, y_0, z_0) we can describe the evolution of the system like P_i = P_{i-1} + G(x, y, z)*dt.
+        :func: Map R^3 -> R^3
+        :init_c: initial conditions of the system.
+        :t_max: constrait of time
+        :color: color of the path ploted by the equation
+        :dt: descrete value for t
+        :kwargs: additional information
+        '''
         config = {
             'stroke': 3,
         }
         for key, value in kwargs.items():
             config.update({key: value})
 
-        point_list = []
+        # List of all points created by the equation
+        point_list = [self.convert_to_pygame(*self.t3d_to_2d(init_c))]
 
-        time = 0
+        t = 0
         new_c = init_c
-        while time <= t_max:
+        while t <= t_max:
+            # G(x,y,z)
             dxyz = func(new_c)
-            if len(point_list) == 0:
-                point_list.append(self.convert_to_pygame(*self.t3d_to_2d(new_c)))
-
             for i in range(0, 3):
+                # P_i = P_{i-1} + G(x, y, z)*dt
                 new_c[i] += dxyz[i] * dt
 
             point_list.append(self.convert_to_pygame(*self.t3d_to_2d(new_c)))
-            time += dt
+            t += dt
 
+        # Plot the path
         pygame.draw.circle(screen, color, [round(axie) for axie in self.convert_to_pygame(*self.t3d_to_2d(new_c))], config['stroke'])
         pygame.draw.lines(screen, color, False, point_list, config['stroke'])
